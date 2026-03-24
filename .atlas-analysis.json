@@ -1,28 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "IBMR C Exercises",
+  "projectType": "general",
+  "projectName": "IBMR C Exercises",
+  "projectDescription": "A student-to-student collection of C programming exercises and examples for IBMR IT students, covering fundamentals through advanced topics.",
   "theme": "almond",
-  "colors": {
-    "primary": "#94cb04",
-    "light": "#545454",
-    "dark": "#94cb04"
-  },
-  "favicon": "https://media.brand.dev/288cc7c4-5cef-4376-950b-bdf0083eedae.png",
-  "logo": {
-    "light": "https://media.brand.dev/288cc7c4-5cef-4376-950b-bdf0083eedae.png",
-    "dark": "https://media.brand.dev/288cc7c4-5cef-4376-950b-bdf0083eedae.png"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/insxnsive/ibmr-c-exercises"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/insxnsive/ibmr-c-exercises"
-    }
-  },
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
   "navigation": {
     "tabs": [
       {
@@ -88,5 +71,19 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Exercises covering all major C programming topics from basics to advanced",
+    "Commented examples designed for learning and self-study",
+    "Practical projects demonstrating real-world use of C constructs",
+    "Step-by-step compilation instructions using GCC",
+    "Student-friendly content with tips and best practices",
+    "Open contributions welcome from students of any university"
+  ],
+  "publicApiSurface": [
+    "typeText(const char *text, int delayMs) — prints text with character-by-character delay",
+    "sleepMs(ms) — macro for millisecond-precision sleep using usleep",
+    "GCC compilation: gcc nome_do_arquivo.c -o programa",
+    "Topics: Hello World, Variables, Operators, I/O, Decision Structures, Loops, Functions, Arrays, Strings, Pointers, Structs, Dynamic Allocation, File I/O"
+  ]
 }

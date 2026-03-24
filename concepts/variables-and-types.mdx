@@ -1,0 +1,238 @@
+---
+title: "Variables and types"
+description: "Fundamental data types in C: int, float, double, char, and more."
+---
+
+A variable is a named location in memory that stores a value. In C, every variable must be declared with a **type** before you can use it. The type tells the compiler how much memory to allocate and how to interpret the bits stored there.
+
+## Declaring and initializing variables
+
+```c
+// Declaration only — value is undefined (garbage)
+int score;
+
+// Declaration with initialization
+int score = 0;
+
+// Multiple variables of the same type
+int x = 10, y = 20, z = 30;
+
+// Assignment after declaration
+float temperature;
+temperature = 36.6;
+```
+
+<Warning>
+  An uninitialized variable holds whatever random data was in that memory location. Always initialize variables before reading them.
+</Warning>
+
+## Fundamental types
+
+### Integer types
+
+<Tabs>
+  <Tab title="Signed">
+    Signed integers can hold positive and negative values.
+
+    ```c
+    short s = -200;           // at least 16 bits, range ~ -32768 to 32767
+    int i = -42000;           // at least 16 bits, usually 32 bits
+    long l = -2000000000L;    // at least 32 bits
+    long long ll = -9000000000000LL; // at least 64 bits
+    ```
+
+    | Type        | Typical size | Typical range                        |
+    |-------------|-------------|--------------------------------------|
+    | `short`     | 16 bits      | -32,768 to 32,767                    |
+    | `int`       | 32 bits      | -2,147,483,648 to 2,147,483,647      |
+    | `long`      | 32 or 64 bits| -2,147,483,648 to 2,147,483,647 (32-bit) |
+    | `long long` | 64 bits      | -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 |
+  </Tab>
+  <Tab title="Unsigned">
+    Unsigned integers only hold zero and positive values, giving twice the positive range.
+
+    ```c
+    unsigned short us = 60000;
+    unsigned int ui = 4000000000U;
+    unsigned long ul = 4000000000UL;
+    unsigned long long ull = 18000000000000000000ULL;
+    ```
+
+    | Type                 | Typical size | Typical range                |
+    |----------------------|-------------|------------------------------|
+    | `unsigned short`     | 16 bits      | 0 to 65,535                  |
+    | `unsigned int`       | 32 bits      | 0 to 4,294,967,295           |
+    | `unsigned long`      | 32 or 64 bits| 0 to 4,294,967,295 (32-bit)  |
+    | `unsigned long long` | 64 bits      | 0 to 18,446,744,073,709,551,615 |
+  </Tab>
+</Tabs>
+
+### Floating-point types
+
+```c
+float  f = 3.14f;        // single precision, ~6-7 significant digits
+double d = 3.14159265;   // double precision, ~15-16 significant digits
+```
+
+Use `double` by default for decimal numbers. Use `float` only when memory is tight or you need to match a hardware format.
+
+### Character type
+
+```c
+char letter = 'A';       // stores a single character
+char digit  = '7';       // the character '7', not the integer 7
+char newline = '\n';     // escape sequence for newline
+```
+
+A `char` holds a small integer (typically -128 to 127) that maps to a character via the ASCII table. `'A'` is stored as 65, `'0'` as 48.
+
+## Type sizes with `sizeof`
+
+The exact size of each type depends on the platform and compiler. Use the `sizeof` operator to find out at runtime:
+
+```c
+#include <stdio.h>
+
+int main() {
+    printf("char:      %zu bytes\n", sizeof(char));
+    printf("short:     %zu bytes\n", sizeof(short));
+    printf("int:       %zu bytes\n", sizeof(int));
+    printf("long:      %zu bytes\n", sizeof(long));
+    printf("long long: %zu bytes\n", sizeof(long long));
+    printf("float:     %zu bytes\n", sizeof(float));
+    printf("double:    %zu bytes\n", sizeof(double));
+    return 0;
+}
+```
+
+Typical output on a 64-bit Linux system:
+
+```
+char:      1 bytes
+short:     2 bytes
+int:       4 bytes
+long:      8 bytes
+long long: 8 bytes
+float:     4 bytes
+double:    8 bytes
+```
+
+<Note>
+  The format specifier for `sizeof` is `%zu` — `z` means size-appropriate, `u` means unsigned. Using `%d` for `sizeof` results can cause warnings or incorrect output on some platforms.
+</Note>
+
+## Type summary table
+
+| Type          | Size (typical) | Use case                                 |
+|---------------|---------------|------------------------------------------|
+| `char`        | 1 byte         | Single characters, small integers        |
+| `short`       | 2 bytes        | Small integer counters                   |
+| `int`         | 4 bytes        | General-purpose integers                 |
+| `long`        | 4 or 8 bytes   | Large integers, file sizes (platform-dependent) |
+| `long long`   | 8 bytes        | Very large integers                      |
+| `float`       | 4 bytes        | Decimal numbers where memory is limited  |
+| `double`      | 8 bytes        | Decimal numbers (default choice)         |
+| `unsigned int`| 4 bytes        | Counts and indices that are never negative |
+
+## Constants
+
+Use constants for values that should never change.
+
+### `const` keyword
+
+```c
+const int MAX_ENEMIES = 5;
+const double PI = 3.14159265358979;
+
+// MAX_ENEMIES = 10;  // ERROR: assignment of read-only variable
+```
+
+The `const` modifier makes a variable read-only after initialization. The compiler enforces this — any attempt to change it is a compile-time error.
+
+### `#define` macro
+
+```c
+#define MAX_HEALTH 100
+#define GRAVITY 9.81
+#define GAME_NAME "Gauntlet"
+```
+
+`#define` is a preprocessor macro. Before compilation, the preprocessor replaces every occurrence of `MAX_HEALTH` in your code with the literal `100`. There is no type, no memory allocation, and no variable.
+
+<AccordionGroup>
+  <Accordion title="const vs #define — which to use?">
+    Prefer `const` for most cases in modern C:
+
+    - `const` has a type, so the compiler can catch type mismatches.
+    - `const` variables appear in debugger output with their name.
+    - `#define` macros are just text substitution — they have no type and no scope.
+
+    Use `#define` for:
+    - Values needed in array size declarations in older C standards (C89/C90).
+    - Platform-specific flags and configuration that must be set at preprocessor time.
+    - Macros that take arguments (function-like macros).
+  </Accordion>
+  <Accordion title="Integer overflow">
+    When an integer exceeds its maximum value, it **wraps around** — this is called overflow.
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        unsigned char x = 255;  // max value for unsigned char
+        x = x + 1;
+        printf("%d\n", x);  // prints 0, not 256
+        return 0;
+    }
+    ```
+
+    Signed integer overflow is **undefined behavior** in C — the compiler is allowed to do anything. Use types large enough for your maximum expected value, or use overflow-safe arithmetic.
+  </Accordion>
+  <Accordion title="Floating-point precision">
+    Floating-point numbers cannot represent most decimal fractions exactly. This causes rounding surprises:
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        float f = 0.1f + 0.2f;
+        printf("%.20f\n", f);  // 0.30000001192092895508, not 0.3
+        return 0;
+    }
+    ```
+
+    For financial calculations or exact comparisons, avoid floating-point. Use integer arithmetic scaled by a factor (e.g., store cents instead of dollars).
+  </Accordion>
+</AccordionGroup>
+
+## Type casting
+
+Sometimes you need to convert a value from one type to another. C performs some conversions automatically (**implicit casting**), but you can also convert explicitly with a **cast**.
+
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 7;
+    int b = 2;
+
+    // Implicit: both operands are int, result is int (3, not 3.5)
+    float wrong = a / b;
+    printf("Without cast: %f\n", wrong);   // 3.000000
+
+    // Explicit cast: cast one operand to float before dividing
+    float correct = (float)a / b;
+    printf("With cast:    %f\n", correct);  // 3.500000
+
+    // Casting double to int truncates (does not round)
+    double d = 9.99;
+    int truncated = (int)d;
+    printf("Truncated:    %d\n", truncated); // 9
+
+    return 0;
+}
+```
+
+<Tip>
+  Always cast explicitly when mixing integer and floating-point arithmetic. Relying on implicit conversion makes code harder to read and can introduce subtle bugs.
+</Tip>

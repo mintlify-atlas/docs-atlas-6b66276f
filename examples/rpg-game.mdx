@@ -1,0 +1,508 @@
+---
+title: "RPG game"
+description: "A fully commented text-based RPG combat game demonstrating switch, while, functions, and more."
+---
+
+## Introduction
+
+`rpg.c` is the star example of the IBMR C Exercises repository. It is a fully commented, interactive text-based RPG combat gauntlet written in pure C.
+
+The premise is simple: the player faces **5 enemies in sequence**. Each enemy starts with **25 HP** (`eHp = 25`), while the player begins with **100 HP** (`hHp = 100`). Every turn, the player picks one of five actions:
+
+| # | Action | Effect |
+|---|--------|--------|
+| 1 | **Attack** | Deals `rand * pDmg` damage (base `pDmg = 5.0`) |
+| 2 | **Guard** | Restores `rand * 2` HP to the player |
+| 3 | **Potion** | Heals `potionEf = 15` HP (limited to `potions = 3`) |
+| 4 | **Gamble** | Permanently adjusts `pDmg` by a random multiplier |
+| 5 | **Flee** | Immediately exits the program |
+
+After every player turn the enemy strikes back for `((rand() % 2) + 1) * eDmg` damage, where `eDmg = 9`. Defeat all 5 enemies without dying to win.
+
+<Info>
+  All of these values — `eHp`, `hHp`, `pDmg`, `eDmg`, `potions`, `potionEf`, and `MAX_ENEMIES` — are defined at the top of the file, making them easy to tweak and experiment with.
+</Info>
+
+---
+
+## What this example teaches
+
+<CardGroup cols={2}>
+  <Card title="switch statement" icon="code-branch">
+    The combat menu is built entirely with a `switch` on the player's numeric input, including a `default` case for unrecognised choices.
+  </Card>
+  <Card title="while loops" icon="arrow-rotate-right">
+    Two nested `while` loops drive the game: an outer loop that iterates over enemies and an inner loop that runs each combat turn.
+  </Card>
+  <Card title="if / else" icon="code">
+    HP checks, potion availability, and the Gamble outcome all use `if`/`else` for conditional branching.
+  </Card>
+  <Card title="Custom functions" icon="code">
+    `typeText()` is a hand-written function that prints a string one character at a time with configurable delay, showing how to pass pointers and use loops inside functions.
+  </Card>
+  <Card title="Macros" icon="terminal">
+    `#define sleepMs(ms)` wraps `usleep` into a friendlier macro that accepts milliseconds, illustrating function-like macros.
+  </Card>
+  <Card title="Global variables" icon="database">
+    Game state (`eHp`, `hHp`, `pDmg`, etc.) is stored in global variables, demonstrating their scope and trade-offs.
+  </Card>
+  <Card title="Random number generation" icon="dice">
+    `srand(time(NULL))` seeds the RNG once, and `rand() % N` produces bounded random values for damage and the Gamble mechanic.
+  </Card>
+  <Card title="sleep / usleep" icon="clock">
+    `sleep()` and `usleep()` from `<unistd.h>` are used to create dramatic pauses, showing how to interact with OS-level timing.
+  </Card>
+</CardGroup>
+
+---
+
+## Full source code
+
+```c rpg.c lines expandable
+/*
+=====================
+| RPG Simples 1.0
+| Documentado com alguns comentários para estudar.
+| Perfeito para aprender exemplos práticos de:
+| switch, while, if, else
+| Feito por Dylan Martins IBMR
+=====================
+*/
+
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define sleepMs(ms) usleep(ms * 1000)
+
+int eHp = 25;
+int hHp = 100;
+double pDmg = 5.0;
+int eDmg = 9;
+int potions = 3;
+int potionEf = 15;
+
+/*
+Criando uma função personalizada para:
+o texto poder aparecer lentamente
+*/
+
+void typeText(const char *text, int delayMs) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        printf("%c", text[i]);
+        fflush(stdout); // Utilizando a stdlib isso se torna possível
+        if (text[i] == '.') {
+            sleepMs(delayMs * 25); // If para se tiver "." o delay ser maior para ser mais dramático
+        } else {
+            sleepMs(delayMs);
+        }
+    }
+    sleep(2); // Dar uma pausa dramática entre os textos
+    printf("\n");
+}
+
+int main() {
+  int hDecision;
+  int enemyCount = 0;
+  const int MAX_ENEMIES = 5;
+
+  srand(time(NULL)); // Necessário apenas uma vez e exige a lib <time.h>
+
+  typeText("Echoes mutter through your mind..", 20);
+  typeText("'Is this some sort of nightmare?' You ask yourself...", 20);
+  typeText("There's no point in going back now!!", 10);
+  sleep(1);
+  printf("========= GAUNTLET START! =========\n");
+
+  while (enemyCount < MAX_ENEMIES && hHp > 0) {
+    eHp = 25;
+    enemyCount++;
+
+    printf("\n>>> ENEMY #%d APPEARS! <<<\n", enemyCount);
+
+      while (hHp > 0) {
+        printf("\n| --- YOUR TURN (Enemy %d/%d) ---\n", enemyCount, MAX_ENEMIES);
+        printf("| Your HP: %d | Enemy HP: %d | Potions: %d |\n", hHp, eHp, potions);
+        printf("| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee\n");
+        printf("| - Your choice: ");
+        scanf("%d", &hDecision);
+
+        const double r = (rand() % 3) + 1;
+        double multiplier = r * .7;
+
+        switch(hDecision) {
+            case 1:
+            {
+              const double hResult = r * pDmg;
+              eHp -= hResult;
+              printf("| [YOU] Dealt %f DMG!\n", hResult);
+              break;
+            }
+            case 2:
+            {
+              int def = r * 2;
+              hHp += def;
+              printf("| [YOU] Defended for %d HP!\n", def);
+              break;
+            }
+            case 3:
+              if (potions >= 0) {
+                potions--;
+                hHp += potionEf;
+                printf("| [YOU] Restored %d HP!\n", potionEf);
+              } else {
+                printf("| [SYSTEM] No potions left!\n");
+              }
+              break;
+            case 4:
+              pDmg += multiplier;
+              if (multiplier < 1) {
+                printf("[YOU] Gambling made you %.1fx weaker...", r * .7);
+              } else {
+                printf("[YOU] Gambling made you %.1fx stronger!", r * .7);
+              }
+              break;
+            case 5:
+              printf("You fled the scene... How heroic...\n");
+              return 0;
+            default:
+              printf("You stood still, unsure of what to do.\n");
+              break;
+        }
+        if (eHp <= 0) {
+            printf("\n[VICTORY] Enemy #%d defeated!\n", enemyCount);
+            sleep(1);
+            break;
+        }
+        int eResult = ((rand() % 2) + 1) * eDmg;
+        hHp -= eResult;
+        printf("| [ENEMY] Dealt %d DMG to you!\n", eResult);
+
+        if (hHp <= 0) {
+            printf("\n[DEFEAT] You have fallen...\n");
+            break;
+        }
+    }
+  }
+
+  if (hHp > 0) {
+      printf("\n!!! YOU CONQUERED THE GAUNTLET !!!\n");
+  }
+
+  printf("========= GAME OVER =========\n");
+  return 0;
+}
+```
+
+---
+
+## Code walkthrough
+
+<Steps>
+  <Step title="Global variables">
+    Six global variables hold every piece of mutable game state:
+
+    ```c
+    int eHp = 25;       // Enemy HP — reset to 25 at the start of every new enemy
+    int hHp = 100;      // Hero HP — persists across all 5 fights
+    double pDmg = 5.0;  // Player base damage — can change permanently via Gamble
+    int eDmg = 9;       // Enemy base damage per hit
+    int potions = 3;    // Number of healing potions the player starts with
+    int potionEf = 15;  // HP restored by each potion
+    ```
+
+    Using globals here keeps the code beginner-friendly — any function can read or modify game state without passing parameters. In larger programs you would typically wrap these into a struct or pass them explicitly.
+  </Step>
+
+  <Step title="The sleepMs macro">
+    ```c
+    #define sleepMs(ms) usleep(ms * 1000)
+    ```
+
+    `usleep` (from `<unistd.h>`) sleeps for a given number of **microseconds**. Multiplying by 1000 converts the caller's **milliseconds** into the unit `usleep` expects. So `sleepMs(20)` pauses for 20 ms (20 000 µs).
+
+    This is a **function-like macro** — it looks like a function call but is expanded by the preprocessor before compilation, with no function-call overhead.
+
+    <Warning>
+      Macro arguments are not type-checked. If you pass an expression with side-effects (e.g. `sleepMs(i++)`) the expression will be evaluated twice. Keep macro arguments simple.
+    </Warning>
+  </Step>
+
+  <Step title="The typeText function">
+    ```c
+    void typeText(const char *text, int delayMs) {
+        for (int i = 0; text[i] != '\0'; i++) {
+            printf("%c", text[i]);
+            fflush(stdout);
+            if (text[i] == '.') {
+                sleepMs(delayMs * 25);
+            } else {
+                sleepMs(delayMs);
+            }
+        }
+        sleep(2);
+        printf("\n");
+    }
+    ```
+
+    - The `for` loop iterates until the **null terminator** (`'\0'`) — the standard way to traverse a C string.
+    - `printf("%c", text[i])` prints exactly **one character** at a time.
+    - `fflush(stdout)` forces the character out of the C standard-library buffer immediately, so the player sees it right away instead of waiting for a newline or a full buffer.
+    - When the current character is a period (`.`), the delay is multiplied by **25** — creating a longer, more dramatic pause after sentences.
+    - After the entire string is printed, `sleep(2)` holds the screen for two full seconds before returning.
+  </Step>
+
+  <Step title="Seeding the RNG">
+    ```c
+    srand(time(NULL));
+    ```
+
+    Called **once** at the start of `main`. `time(NULL)` returns the current Unix timestamp (seconds since 1970-01-01), which is different every time the program runs. Passing it to `srand` ensures `rand()` produces a different sequence each playthrough. Without this call, `rand()` would return the same sequence every run.
+  </Step>
+
+  <Step title="The outer while loop">
+    ```c
+    while (enemyCount < MAX_ENEMIES && hHp > 0) {
+        eHp = 25;       // Reset enemy HP for every new fight
+        enemyCount++;   // Track how many enemies have appeared
+        ...
+    }
+    ```
+
+    The loop has **two exit conditions** joined by `&&`:
+
+    - `enemyCount < MAX_ENEMIES` — stops after 5 enemies.
+    - `hHp > 0` — stops immediately if the player dies mid-gauntlet.
+
+    Both must be true for the loop to continue. `eHp` is reset to 25 here, not inside the inner loop, so each enemy starts fresh while the player's HP carries over.
+  </Step>
+
+  <Step title="The inner while loop">
+    ```c
+    while (hHp > 0) {
+        // Show turn info, read choice, process turn...
+        if (eHp <= 0) { break; }  // Enemy defeated
+        // Enemy attacks...
+        if (hHp <= 0) { break; }  // Player defeated
+    }
+    ```
+
+    The inner loop runs indefinitely as long as the hero is alive. **Two `break` statements** act as the real exit points:
+
+    1. After the player's action, if `eHp <= 0`, the enemy has been defeated — break and move to the next enemy.
+    2. After the enemy's counter-attack, if `hHp <= 0`, the player has died — break and let the outer loop's condition (`hHp > 0`) also terminate.
+  </Step>
+
+  <Step title="The switch statement">
+    ```c
+    switch(hDecision) {
+        case 1: /* Attack  */ break;
+        case 2: /* Guard   */ break;
+        case 3: /* Potion  */ break;
+        case 4: /* Gamble  */ break;
+        case 5: /* Flee    */ return 0;
+        default:             break;
+    }
+    ```
+
+    Each `case` maps directly to a menu option. Notice:
+
+    - **Case 5 (Flee)** uses `return 0` instead of `break` — it exits the entire program immediately.
+    - **`default`** handles any input that is not 1–5, printing a message and effectively wasting the player's turn.
+    - Cases 1 and 2 declare local variables inside `{}` braces — this is necessary in C to scope the variable to that case block only.
+  </Step>
+
+  <Step title="Random damage formula">
+    ```c
+    // Enemy attack
+    int eResult = ((rand() % 2) + 1) * eDmg;
+    ```
+
+    `rand() % 2` produces either **0 or 1**. Adding 1 shifts the range to **1 or 2**. Multiplying by `eDmg = 9` gives a final enemy hit of either **9 or 18** — a wide spread that keeps fights tense.
+
+    ```c
+    // Player attack (r is already (rand() % 3) + 1, so 1, 2, or 3)
+    const double hResult = r * pDmg;
+    ```
+
+    `r` ranges from 1 to 3, so the player deals between **5.0 and 15.0** base damage (before any Gamble adjustments).
+  </Step>
+
+  <Step title="The Gamble mechanic">
+    ```c
+    const double r = (rand() % 3) + 1;  // 1, 2, or 3
+    double multiplier = r * .7;          // 0.7, 1.4, or 2.1
+
+    // case 4:
+    pDmg += multiplier;
+    if (multiplier < 1) {
+        printf("[YOU] Gambling made you %.1fx weaker...", r * .7);
+    } else {
+        printf("[YOU] Gambling made you %.1fx stronger!", r * .7);
+    }
+    ```
+
+    The multiplier is `r * 0.7`, which evaluates to **0.7, 1.4, or 2.1**. Because the threshold for the "weaker" branch is `multiplier < 1`, there is a **one-in-three chance** of the Gamble reducing `pDmg`. There are **two-in-three chances** of a boost. Note that `pDmg` is modified permanently — repeated Gambles stack.
+  </Step>
+
+  <Step title="Victory condition">
+    ```c
+    if (hHp > 0) {
+        printf("\n!!! YOU CONQUERED THE GAUNTLET !!!\n");
+    }
+    printf("========= GAME OVER =========\n");
+    ```
+
+    After both loops finish, this `if` is outside every loop. If `hHp` is still positive, all 5 enemies were defeated and the player wins. `GAME OVER` prints regardless — it serves as the program's final line in every outcome.
+  </Step>
+</Steps>
+
+---
+
+## How to compile and run
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    gcc rpg.c -o rpg
+    ./rpg
+    ```
+  </Tab>
+  <Tab title="Windows (MinGW / WSL)">
+    ```bash
+    gcc rpg.c -o rpg.exe && rpg.exe
+    ```
+
+    Run inside **WSL** (Windows Subsystem for Linux) or a MinGW/MSYS2 shell. Native MSVC does not ship `<unistd.h>` — if you need to compile with MSVC, replace `usleep` with `Sleep` from `<windows.h>` and adjust the unit from microseconds to milliseconds.
+  </Tab>
+</Tabs>
+
+<Note>
+  `<unistd.h>` is a POSIX header. It is available on Linux, macOS, and WSL out of the box. MinGW on Windows also provides it. Bare MSVC does **not** include it.
+</Note>
+
+---
+
+## Sample game session
+
+Below is an example of what a typical run looks like in the terminal. Actual damage numbers vary each run due to `rand()`.
+
+```
+Echoes mutter through your mind..
+'Is this some sort of nightmare?' You ask yourself...
+There's no point in going back now!!
+========= GAUNTLET START! =========
+
+>>> ENEMY #1 APPEARS! <<<
+
+| --- YOUR TURN (Enemy 1/5) ---
+| Your HP: 100 | Enemy HP: 25 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice: 1
+| [YOU] Dealt 10.000000 DMG!
+| [ENEMY] Dealt 9 DMG to you!
+
+| --- YOUR TURN (Enemy 1/5) ---
+| Your HP: 91 | Enemy HP: 15 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice: 1
+| [YOU] Dealt 15.000000 DMG!
+
+[VICTORY] Enemy #1 defeated!
+
+>>> ENEMY #2 APPEARS! <<<
+
+| --- YOUR TURN (Enemy 2/5) ---
+| Your HP: 91 | Enemy HP: 25 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice: 4
+[YOU] Gambling made you 1.4x stronger!
+| [ENEMY] Dealt 18 DMG to you!
+
+| --- YOUR TURN (Enemy 2/5) ---
+| Your HP: 73 | Enemy HP: 25 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice: 1
+| [YOU] Dealt 19.200001 DMG!
+| [ENEMY] Dealt 9 DMG to you!
+
+| --- YOUR TURN (Enemy 2/5) ---
+| Your HP: 64 | Enemy HP: 5 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice: 1
+| [YOU] Dealt 6.400000 DMG!
+
+[VICTORY] Enemy #2 defeated!
+```
+
+<Tip>
+  The floating-point output (`%f`) in the Attack line shows up to 6 decimal places by default. That is a great conversation starter about `printf` format specifiers — try changing `%f` to `%.2f` to limit it to two decimal places.
+</Tip>
+
+---
+
+## Extending the example
+
+Once you are comfortable reading the code, try these modifications to sharpen your C skills:
+
+<AccordionGroup>
+  <Accordion title="Add more enemy types with different HP and damage">
+    Define a struct or use parallel arrays to give each of the 5 enemies its own `eHp` and `eDmg`. For example:
+
+    ```c
+    int enemyHps[5]  = { 25, 30, 40, 50, 80 };
+    int enemyDmgs[5] = {  9, 11, 13, 15, 20 };
+    ```
+
+    Inside the outer `while` loop, initialise `eHp = enemyHps[enemyCount - 1]` and `eDmg = enemyDmgs[enemyCount - 1]` instead of the fixed constants. This teaches **arrays** and **indexing**.
+  </Accordion>
+
+  <Accordion title="Add a healing mechanic that costs a turn">
+    Introduce a new menu option (e.g. option 6) that lets the player sacrifice one turn to regenerate a fixed amount of HP — but only if their HP is below a threshold:
+
+    ```c
+    case 6:
+        if (hHp < 50) {
+            hHp += 10;
+            printf("| [YOU] Caught your breath and recovered 10 HP!\n");
+        } else {
+            printf("| [YOU] You feel fine enough to fight!\n");
+        }
+        break;
+    ```
+
+    This reinforces `if`/`else` conditions and extending a `switch`.
+  </Accordion>
+
+  <Accordion title="Track stats: turns taken and total damage dealt">
+    Add global (or local) counters and print a summary at the end:
+
+    ```c
+    int totalTurns = 0;
+    double totalDmgDealt = 0.0;
+    int totalDmgTaken = 0;
+    ```
+
+    Increment them in the relevant `case` blocks and after the enemy attacks. At the end of `main`, print:
+
+    ```c
+    printf("Turns: %d | Dealt: %.1f | Taken: %d\n",
+           totalTurns, totalDmgDealt, totalDmgTaken);
+    ```
+
+    This teaches **accumulator variables** and end-of-program summaries.
+  </Accordion>
+
+  <Accordion title="Add an inventory system using arrays">
+    Replace the single `potions` integer with an array of item types:
+
+    ```c
+    #define INVENTORY_SIZE 5
+    int inventory[INVENTORY_SIZE]; // 0 = empty, 1 = potion, 2 = elixir
+    int itemCount = 0;
+    ```
+
+    Write helper functions `addItem` and `useItem` that search the array. This is an excellent introduction to **arrays**, **loops over arrays**, and **simple inventory management** — all fundamental patterns in game programming.
+  </Accordion>
+</AccordionGroup>

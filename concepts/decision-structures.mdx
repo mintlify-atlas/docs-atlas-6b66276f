@@ -1,0 +1,264 @@
+---
+title: "Decision structures"
+description: "if, else, switch, and the ternary operator for branching logic in C."
+---
+
+Decision structures let your program choose different paths based on conditions. C provides several tools for branching: `if`, `else`, `else if`, the ternary operator, and `switch`. Knowing when to use each one makes your code clearer and easier to maintain.
+
+## The `if` statement
+
+The simplest branching tool. A block of code runs only when a condition is true.
+
+```c
+if (condition) {
+    // runs when condition is true
+}
+```
+
+**Example:**
+
+```c
+int hp = 10;
+
+if (hp <= 0) {
+    printf("You have fallen...\n");
+}
+```
+
+If `hp` is greater than zero, nothing happens. The block is skipped entirely.
+
+## `if` / `else`
+
+Add an `else` block to handle the case when the condition is false.
+
+```c
+if (condition) {
+    // runs when true
+} else {
+    // runs when false
+}
+```
+
+**Example** — from `rpg.c`, checking whether the enemy is alive after a hit:
+
+```c
+if (eHp <= 0) {
+    printf("\n[VICTORY] Enemy #%d defeated!\n", enemyCount);
+    sleep(1);
+    break;
+}
+```
+
+If the enemy still has HP, the `if` block is skipped and combat continues.
+
+## `if` / `else if` / `else` chain
+
+When you have more than two possible outcomes, chain `else if` clauses together.
+
+```c
+if (condition1) {
+    // first option
+} else if (condition2) {
+    // second option
+} else {
+    // fallback
+}
+```
+
+**Example** — categorising a player's HP:
+
+```c
+if (hHp > 75) {
+    printf("Feeling great!\n");
+} else if (hHp > 40) {
+    printf("A bit bruised...\n");
+} else if (hHp > 0) {
+    printf("Barely standing!\n");
+} else {
+    printf("You have fallen...\n");
+}
+```
+
+C evaluates conditions top to bottom and stops at the first one that is true. Only one branch ever runs.
+
+## The ternary operator
+
+A compact way to write a simple `if`/`else` that produces a value.
+
+```c
+condition ? value_if_true : value_if_false
+```
+
+**Example:**
+
+```c
+int potions = 2;
+printf("%s\n", potions > 0 ? "Potions available" : "No potions left");
+```
+
+<Tip>
+Use the ternary operator for short, simple conditions where you need a value inline. For anything more complex — especially when a side effect is involved — stick with a regular `if`/`else` so the code stays readable.
+</Tip>
+
+## The `switch` statement
+
+`switch` compares one expression against a list of constant values (`case` labels). It is ideal when you have a single variable that can take several specific values.
+
+```c
+switch (expression) {
+    case value1:
+        // ...
+        break;
+    case value2:
+        // ...
+        break;
+    default:
+        // runs when no case matches
+        break;
+}
+```
+
+### Real example — the combat menu from `rpg.c`
+
+Here is the actual `switch` from the game. The player types a number and the game reacts accordingly:
+
+```c
+switch(hDecision) {
+    case 1: // Attack
+    {
+        const double hResult = r * pDmg;
+        eHp -= hResult;
+        printf("| [YOU] Dealt %f DMG!\n", hResult);
+        break;
+    }
+    case 2: // Guard
+    {
+        int def = r * 2;
+        hHp += def;
+        printf("| [YOU] Defended for %d HP!\n", def);
+        break;
+    }
+    case 3: // Potion
+        if (potions >= 0) {
+            potions--;
+            hHp += potionEf;
+            printf("| [YOU] Restored %d HP!\n", potionEf);
+        } else {
+            printf("| [SYSTEM] No potions left!\n");
+        }
+        break;
+    case 4: // Gamble
+        pDmg += multiplier;
+        if (multiplier < 1) {
+            printf("[YOU] Gambling made you %.1fx weaker...", r*.7);
+        } else {
+            printf("[YOU] Gambling made you %.1fx stronger!", r*.7);
+        }
+        break;
+    case 5: // Flee
+        printf("You fled the scene... How heroic...\n");
+        return 0;
+    default: // Unexpected input
+        printf("You stood still, unsure of what to do.\n");
+        break;
+}
+```
+
+Each `case` maps a menu number to an action. The `default` case catches anything that is not 1–5, so the program always has a safe fallback.
+
+## `switch` vs `if`/`else` — when to use which
+
+<Tabs>
+  <Tab title="switch">
+    Use `switch` when:
+
+    - You are comparing **one integer or character variable** against a fixed list of known values.
+    - There are **three or more** distinct options.
+    - All cases are **compile-time constants** (no ranges or complex conditions).
+
+    ```c
+    // Good fit for switch: single variable, fixed values
+    switch (menuChoice) {
+        case 1: attack();  break;
+        case 2: guard();   break;
+        case 3: usePot();  break;
+        default: idle();   break;
+    }
+    ```
+  </Tab>
+  <Tab title="if / else">
+    Use `if`/`else` when:
+
+    - You need to check **ranges or complex conditions** (`hp > 50`, `x != y`).
+    - Conditions involve **multiple variables** at once.
+    - You need to test **floating-point** values (`switch` does not support them).
+
+    ```c
+    // Better with if/else: range checks
+    if (hp > 75) {
+        printf("Healthy\n");
+    } else if (hp > 25) {
+        printf("Wounded\n");
+    } else {
+        printf("Critical\n");
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Common mistake: forgetting `break` in `switch`
+
+<Warning>
+**Fallthrough** happens when you omit `break` at the end of a `case`. C does not stop at the case boundary — it keeps executing the code in the next case, and the one after that, until it hits a `break` or the end of the `switch`.
+
+```c
+// BUG: missing break after case 1
+switch (choice) {
+    case 1:
+        printf("Option 1\n");
+        // forgot break — falls through to case 2!
+    case 2:
+        printf("Option 2\n");
+        break;
+}
+// If choice == 1, both "Option 1" and "Option 2" are printed.
+```
+
+Always double-check that every `case` ends with `break` (or `return`) unless you **intentionally** want fallthrough.
+</Warning>
+
+<CodeGroup>
+
+```c correct.c
+// Correct: every case has break
+switch (choice) {
+    case 1:
+        printf("Attack!\n");
+        break;
+    case 2:
+        printf("Guard!\n");
+        break;
+    default:
+        printf("Stood still.\n");
+        break;
+}
+```
+
+```c intentional-fallthrough.c
+// Intentional fallthrough: cases 1 and 2 share the same action
+switch (choice) {
+    case 1:
+    case 2:
+        printf("Both options do the same thing.\n");
+        break;
+    default:
+        printf("Unknown option.\n");
+        break;
+}
+```
+
+</CodeGroup>
+
+<Tip>
+Some compilers (GCC, Clang) can warn you about unintentional fallthrough. Enable warnings with `-Wall` when you compile to catch this class of bug early.
+</Tip>

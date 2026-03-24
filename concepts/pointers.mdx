@@ -1,0 +1,222 @@
+---
+title: "Pointers"
+description: "Understanding pointers, memory addresses, and pointer arithmetic in C."
+---
+
+A **pointer** is a variable that stores a memory address. Instead of holding a value like `42` or `'A'`, it holds the location in memory where that value lives. Pointers are one of C's most powerful (and most misunderstood) features.
+
+## What is a memory address?
+
+Every variable you declare occupies space in memory. That space has an address — a number that identifies exactly where it sits. Pointers let you store and work with those addresses directly.
+
+```c addresses.c
+int x = 10;
+printf("Value of x:   %d\n", x);   // 10
+printf("Address of x: %p\n", &x);  // something like 0x7ffee4b3c
+```
+
+## Declaring a pointer
+
+Use `*` after the type to declare a pointer variable:
+
+```c declare.c
+int  *p;     // pointer to int
+double *d;   // pointer to double
+char *c;     // pointer to char
+```
+
+<Note>
+  The `*` in a declaration means "this is a pointer". It is different from the `*` used later to dereference.
+</Note>
+
+## The address-of operator `&` and dereference operator `*`
+
+<Steps>
+  <Step title="Take the address with &">
+    `&variable` gives you the memory address of that variable.
+
+    ```c address-of.c
+    int x = 10;
+    int *p = &x; // p now holds the address of x
+    printf("%p\n", p); // prints the address
+    ```
+  </Step>
+  <Step title="Read or write through the pointer with *">
+    `*pointer` (when used in an expression, not a declaration) **dereferences** the pointer — it goes to that address and reads or writes the value there.
+
+    ```c dereference.c
+    int x = 10;
+    int *p = &x;
+
+    printf("%d\n", *p); // 10 — read the value at the address
+    *p = 99;            // write 99 to that address
+    printf("%d\n", x);  // 99 — x itself changed!
+    ```
+  </Step>
+</Steps>
+
+## Pointers and arrays
+
+In C, the name of an array is essentially a pointer to its first element. You can use pointer arithmetic to walk through an array.
+
+```c pointer-array.c
+int arr[5] = {10, 20, 30, 40, 50};
+int *p = arr; // same as &arr[0]
+
+printf("%d\n", *p);     // 10 — first element
+printf("%d\n", *(p+1)); // 20 — second element
+printf("%d\n", *(p+4)); // 50 — fifth element
+
+// arr[i] and *(arr + i) are exactly equivalent
+printf("%d\n", arr[2]);    // 30
+printf("%d\n", *(arr + 2)); // 30
+```
+
+## Pointer arithmetic
+
+When you add `1` to a pointer, it does not add 1 to the raw address. It moves forward by **one element** of the pointer's type.
+
+```c arithmetic.c
+int arr[] = {10, 20, 30};
+int *p = arr;
+
+p++;                    // advance by sizeof(int) bytes
+printf("%d\n", *p);     // 20
+
+p += 2;                 // advance by 2 * sizeof(int) bytes
+// now past the end — don't dereference!
+```
+
+<Warning>
+  Pointer arithmetic is only valid within the bounds of an array (or one past the end). Dereferencing a pointer outside those bounds is undefined behavior.
+</Warning>
+
+## Passing pointers to functions (pass by reference)
+
+Passing a pointer to a function lets the function modify the original variable:
+
+<Tabs>
+  <Tab title="Pass by value (no effect)">
+    ```c by-value.c
+    void increment(int n) {
+        n++;  // changes only the local copy
+    }
+
+    int main() {
+        int x = 5;
+        increment(x);
+        printf("%d\n", x); // still 5
+        return 0;
+    }
+    ```
+  </Tab>
+  <Tab title="Pass by pointer (modifies original)">
+    ```c by-pointer.c
+    void increment(int *n) {
+        (*n)++;  // modifies the original through the pointer
+    }
+
+    int main() {
+        int x = 5;
+        increment(&x);     // pass the address of x
+        printf("%d\n", x); // 6
+        return 0;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Pointers and strings in rpg.c
+
+The `typeText()` function from `rpg.c` demonstrates pointer usage with strings:
+
+```c rpg.c
+void typeText(const char *text, int delayMs) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        printf("%c", text[i]);
+        fflush(stdout);
+        if (text[i] == '.') {
+            sleepMs(delayMs * 25);
+        } else {
+            sleepMs(delayMs);
+        }
+    }
+    sleep(2);
+    printf("\n");
+}
+```
+
+The parameter `const char *text` is a **pointer to `char`** — the standard way to pass a string in C. When you call `typeText("Hello", 20)`, the string literal `"Hello"` decays to a pointer to its first character, and that pointer is passed to the function.
+
+Inside the function, `text[i]` is pointer arithmetic in disguise — it is exactly equivalent to `*(text + i)`. The loop reads one character at a time until it reaches `'\0'`.
+
+<Tip>
+  `const char *text` is the correct signature when a function only reads a string. The `const` tells both the compiler and other developers that this function will not modify the string.
+</Tip>
+
+## Pointer to pointer
+
+A pointer can point to another pointer. This is common when you need to modify a pointer inside a function.
+
+```c ptr-to-ptr.c
+void setToTen(int **pp) {
+    **pp = 10; // dereference twice: once to get the int*, once to get the int
+}
+
+int main() {
+    int x = 0;
+    int *p = &x;
+    setToTen(&p); // pass the address of the pointer
+    printf("%d\n", x); // 10
+    return 0;
+}
+```
+
+## NULL pointer
+
+`NULL` is a special pointer value that means "points to nothing". Use it to initialize pointers that do not yet have a valid target.
+
+```c null-pointer.c
+int *p = NULL; // safe initial value
+
+// Always check before dereferencing
+if (p != NULL) {
+    printf("%d\n", *p);
+} else {
+    printf("Pointer is null, cannot dereference\n");
+}
+```
+
+<Warning>
+  ### Uninitialized pointer
+
+  A pointer that is declared but never assigned contains a garbage address. Dereferencing it causes undefined behavior — usually a crash.
+
+  ```c uninit.c
+  int *p;     // uninitialized — contains garbage
+  *p = 42;    // undefined behavior! likely a segfault
+  ```
+
+  Always initialize pointers to `NULL` or a valid address before use.
+</Warning>
+
+<Warning>
+  ### Dangling pointer
+
+  A dangling pointer is one that used to point to valid memory, but that memory has since been freed or gone out of scope.
+
+  ```c dangling.c
+  int *getNumber() {
+      int x = 42;
+      return &x; // DANGER: x is destroyed when the function returns
+  }
+
+  int main() {
+      int *p = getNumber();
+      printf("%d\n", *p); // undefined behavior — x no longer exists
+      return 0;
+  }
+  ```
+
+  Never return a pointer to a local variable.
+</Warning>

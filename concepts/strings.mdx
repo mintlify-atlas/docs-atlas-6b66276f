@@ -1,0 +1,271 @@
+---
+title: "Strings"
+description: "Working with character arrays and string functions in C."
+---
+
+Unlike many modern languages, C has no built-in string type. A **string in C is simply an array of `char` values terminated by the null character `'\0'`**. Understanding this model is essential for writing correct C programs.
+
+## What is a C string?
+
+```c string-model.c
+char greeting[6] = {'H', 'e', 'l', 'l', 'o', '\0'};
+```
+
+In memory, this looks like:
+
+| Index | 0 | 1 | 2 | 3 | 4 | 5 |
+|-------|---|---|---|---|---|---|
+| Value | H | e | l | l | o | \0 |
+
+The `'\0'` (null terminator) at the end signals where the string ends. Every standard string function relies on it.
+
+## String literals vs character arrays
+
+<Tabs>
+  <Tab title="String literal">
+    A string literal is a sequence of characters inside double quotes. C automatically adds the null terminator.
+
+    ```c string-literal.c
+    char *greeting = "Hello";  // pointer to a string literal
+    // greeting[0] = 'h';      // DANGER: modifying a literal is undefined behavior
+    ```
+
+    String literals are stored in read-only memory. Do not try to modify them.
+  </Tab>
+  <Tab title="Character array">
+    Declaring a character array gives you a writable string.
+
+    ```c char-array.c
+    char greeting[] = "Hello"; // array of 6 chars (includes '\0')
+    greeting[0] = 'h';         // safe — this is a modifiable array
+
+    char buffer[50];           // uninitialized buffer ready for input
+    ```
+
+    Always make your buffer large enough to hold the content plus the null terminator.
+  </Tab>
+</Tabs>
+
+## Reading and printing strings
+
+```c io.c
+#include <stdio.h>
+
+int main() {
+    char name[50];
+
+    // Reading a single word (stops at whitespace)
+    printf("Enter your name: ");
+    scanf("%s", name); // note: no & needed — array already decays to pointer
+
+    // Reading a full line (safer, includes spaces)
+    printf("Enter a sentence: ");
+    fgets(name, sizeof(name), stdin);
+
+    // Printing
+    printf("Hello, %s\n", name);
+
+    return 0;
+}
+```
+
+<Warning>
+  `scanf("%s", str)` does not limit how many characters it reads. If the input is longer than your buffer, it writes past the end — a **buffer overflow**. Prefer `fgets(str, sizeof(str), stdin)` for safe input.
+</Warning>
+
+## String functions from `<string.h>`
+
+Include `<string.h>` to access the standard string library.
+
+```c include.c
+#include <string.h>
+```
+
+<AccordionGroup>
+  <Accordion title="strlen — get string length">
+    Returns the number of characters **before** the null terminator.
+
+    ```c strlen.c
+    #include <stdio.h>
+    #include <string.h>
+
+    int main() {
+        char word[] = "Hello";
+        int len = strlen(word); // len = 5 (not 6 — '\0' is not counted)
+        printf("Length: %d\n", len);
+        return 0;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="strcpy — copy a string">
+    Copies `src` into `dest`, including the null terminator.
+
+    ```c strcpy.c
+    #include <string.h>
+
+    int main() {
+        char src[] = "Hello";
+        char dest[20];
+
+        strcpy(dest, src);
+        // dest is now "Hello"
+        return 0;
+    }
+    ```
+
+    <Warning>
+      `strcpy` does not check if `dest` is large enough. Use `strncpy` when the source size is unknown.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="strcat — concatenate strings">
+    Appends `src` to the end of `dest`. `dest` must be large enough to hold both strings.
+
+    ```c strcat.c
+    #include <stdio.h>
+    #include <string.h>
+
+    int main() {
+        char result[20] = "Hello";
+        strcat(result, ", World");
+        printf("%s\n", result); // Hello, World
+        return 0;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="strcmp — compare strings">
+    Compares two strings lexicographically. Returns `0` if equal, a negative value if the first is less, a positive value if the first is greater.
+
+    ```c strcmp.c
+    #include <stdio.h>
+    #include <string.h>
+
+    int main() {
+        char a[] = "apple";
+        char b[] = "banana";
+
+        if (strcmp(a, b) == 0) {
+            printf("Equal\n");
+        } else if (strcmp(a, b) < 0) {
+            printf("%s comes first\n", a); // apple comes first
+        } else {
+            printf("%s comes first\n", b);
+        }
+        return 0;
+    }
+    ```
+
+    <Note>
+      Never compare strings with `==`. That compares memory addresses, not content.
+    </Note>
+  </Accordion>
+
+  <Accordion title="strncpy — safe copy with size limit">
+    Like `strcpy`, but copies at most `n` characters. Use this to avoid buffer overflows.
+
+    ```c strncpy.c
+    #include <string.h>
+
+    int main() {
+        char src[] = "A very long string that might overflow";
+        char dest[10];
+
+        strncpy(dest, src, sizeof(dest) - 1);
+        dest[sizeof(dest) - 1] = '\0'; // always null-terminate manually
+        return 0;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="strncat — safe concatenation with size limit">
+    Appends at most `n` characters from `src` to `dest`.
+
+    ```c strncat.c
+    #include <string.h>
+
+    int main() {
+        char result[20] = "Hello";
+        char extra[] = ", World! Extra text...";
+
+        // append at most (sizeof(result) - strlen(result) - 1) chars
+        strncat(result, extra, sizeof(result) - strlen(result) - 1);
+        return 0;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="strncmp — compare with size limit">
+    Like `strcmp`, but compares at most `n` characters. Useful for checking prefixes.
+
+    ```c strncmp.c
+    #include <stdio.h>
+    #include <string.h>
+
+    int main() {
+        char cmd[] = "quit now";
+
+        // check only the first 4 characters
+        if (strncmp(cmd, "quit", 4) == 0) {
+            printf("Quit command received\n");
+        }
+        return 0;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Strings as function parameters
+
+When you pass a string to a function, it decays to a pointer (`char *` or `const char *`). This is exactly what happens in `typeText()` from `rpg.c`:
+
+```c rpg.c
+void typeText(const char *text, int delayMs) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        printf("%c", text[i]); // access characters via index
+        fflush(stdout);        // force output immediately
+        if (text[i] == '.') {
+            sleepMs(delayMs * 25); // longer pause after a period
+        } else {
+            sleepMs(delayMs);
+        }
+    }
+    sleep(2); // dramatic pause after the full line
+    printf("\n");
+}
+```
+
+The `const char *text` parameter means: "I receive a pointer to a character array, and I promise not to modify it." The loop walks through the array character by character until it hits the null terminator.
+
+<Tip>
+  Use `const char *` for string parameters that the function only reads. This prevents accidental modification and communicates intent clearly.
+</Tip>
+
+## Common mistakes
+
+<Warning>
+  ### Forgetting the null terminator
+
+  If you build a character array manually and forget `'\0'`, string functions will read past the end of your data:
+
+  ```c no-null.c
+  char bad[5] = {'H', 'e', 'l', 'l', 'o'}; // no '\0'!
+  printf("%s\n", bad); // undefined behavior — reads garbage
+
+  char good[6] = {'H', 'e', 'l', 'l', 'o', '\0'}; // correct
+  ```
+</Warning>
+
+<Warning>
+  ### Buffer overflow
+
+  Writing more characters than the array can hold corrupts memory:
+
+  ```c overflow.c
+  char name[5];
+  strcpy(name, "Alexander"); // 9 chars + '\0' into a 5-char buffer — overflow!
+  ```
+
+  Always ensure your destination array is large enough, and prefer the `n`-limited variants (`strncpy`, `strncat`) when in doubt.
+</Warning>

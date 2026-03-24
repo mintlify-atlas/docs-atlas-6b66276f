@@ -1,0 +1,259 @@
+---
+title: "Input and output"
+description: "Using printf and scanf for formatted output and user input in C."
+---
+
+Most programs need to communicate with the user: printing results and reading input. In C, the two workhorses for this are `printf` (output) and `scanf` (input), both declared in `<stdio.h>`.
+
+## `printf` — formatted output
+
+`printf` writes formatted text to standard output (your terminal). The first argument is a **format string** containing literal text and **format specifiers** that are replaced by the values of subsequent arguments.
+
+```c
+#include <stdio.h>
+
+int main() {
+    int hp = 100;
+    int enemyHp = 25;
+    int potions = 3;
+
+    printf("| Your HP: %d | Enemy HP: %d | Potions: %d |\n",
+           hp, enemyHp, potions);
+    return 0;
+}
+```
+
+Output:
+
+```
+| Your HP: 100 | Enemy HP: 25 | Potions: 3 |
+```
+
+### Format specifiers
+
+Each specifier begins with `%` and is replaced by the corresponding argument.
+
+| Specifier | Type             | Example                        | Output         |
+|-----------|------------------|--------------------------------|----------------|
+| `%d`      | `int`            | `printf("%d", 42)`             | `42`           |
+| `%i`      | `int`            | `printf("%i", -7)`             | `-7`           |
+| `%u`      | `unsigned int`   | `printf("%u", 3000000000U)`    | `3000000000`   |
+| `%f`      | `float`/`double` | `printf("%f", 3.14)`           | `3.140000`     |
+| `%lf`     | `double`         | `printf("%lf", 3.14159)`       | `3.141590`     |
+| `%e`      | `double`         | `printf("%e", 12345.6)`        | `1.234560e+04` |
+| `%c`      | `char`           | `printf("%c", 'A')`            | `A`            |
+| `%s`      | `char *` (string) | `printf("%s", "hello")`       | `hello`        |
+| `%x`      | `unsigned int` (hex) | `printf("%x", 255)`        | `ff`           |
+| `%X`      | `unsigned int` (hex) | `printf("%X", 255)`        | `FF`           |
+| `%p`      | pointer          | `printf("%p", &x)`             | `0x7ffd...`    |
+| `%%`      | literal `%`      | `printf("100%%")`              | `100%`         |
+
+### Width and precision
+
+You can control the width of the output and the number of decimal places:
+
+```c
+#include <stdio.h>
+
+int main() {
+    double damage = 12.500000;
+
+    printf("%10.2f\n", damage);   // width 10, 2 decimal places:   "     12.50"
+    printf("%-10.2f|\n", damage); // left-aligned:                 "12.50     |"
+    printf("%05d\n", 42);         // zero-padded width 5:          "00042"
+
+    return 0;
+}
+```
+
+## Escape sequences
+
+Escape sequences represent special characters inside string literals.
+
+| Sequence | Meaning          |
+|----------|------------------|
+| `\n`     | Newline          |
+| `\t`     | Horizontal tab   |
+| `\r`     | Carriage return  |
+| `\\`     | Literal backslash |
+| `\"`     | Literal double quote |
+| `\'`     | Literal single quote |
+| `\0`     | Null character (string terminator) |
+| `\a`     | Alert (bell)     |
+
+```c
+printf("Name:\t%s\n", "Alice");        // tab before name
+printf("Path: C:\\Users\\Alice\n");     // backslashes in path
+printf("She said \"hello\".\n");        // quotes inside string
+```
+
+## `scanf` — reading user input
+
+`scanf` reads formatted input from standard input (keyboard) and stores the values into variables. Its syntax mirrors `printf`: a format string followed by the **addresses** of variables where the values should be stored.
+
+```c
+#include <stdio.h>
+
+int main() {
+    int choice;
+
+    printf("Enter your choice: ");
+    scanf("%d", &choice);  // & gives scanf the memory address of 'choice'
+    printf("You chose: %d\n", choice);
+
+    return 0;
+}
+```
+
+The `&` operator (address-of) passes the memory address of `choice` to `scanf`, so `scanf` can write the value directly into that variable.
+
+### Reading multiple values
+
+<CodeGroup>
+
+```c read two ints
+#include <stdio.h>
+
+int main() {
+    int x, y;
+
+    printf("Enter two numbers: ");
+    scanf("%d %d", &x, &y);  // reads two integers separated by whitespace
+    printf("Sum: %d\n", x + y);
+
+    return 0;
+}
+```
+
+```c read int and float
+#include <stdio.h>
+
+int main() {
+    int age;
+    float height;
+
+    printf("Enter age and height: ");
+    scanf("%d %f", &age, &height);
+    printf("Age: %d, Height: %.2f m\n", age, height);
+
+    return 0;
+}
+```
+
+```c read a character
+#include <stdio.h>
+
+int main() {
+    char letter;
+
+    printf("Enter a letter: ");
+    scanf(" %c", &letter);  // note the space before %c — skips whitespace/newlines
+    printf("You entered: %c\n", letter);
+
+    return 0;
+}
+```
+
+</CodeGroup>
+
+### `scanf` format specifiers
+
+| Specifier | Type              |
+|-----------|-------------------|
+| `%d`      | `int *`           |
+| `%f`      | `float *`         |
+| `%lf`     | `double *`        |
+| `%c`      | `char *`          |
+| `%s`      | `char[]` (string) |
+| `%u`      | `unsigned int *`  |
+| `%x`      | `unsigned int *` (hex) |
+
+<Warning>
+  **`%lf` vs `%f` in scanf:** When reading a `double`, always use `%lf` in `scanf`. Using `%f` for a `double *` argument is undefined behavior. In `printf`, both `%f` and `%lf` print a `double` correctly (the `l` is ignored), but in `scanf` the distinction is critical.
+</Warning>
+
+## `scanf` in the IBMR exercises
+
+The `rpg.c` example in this repository uses `scanf` directly to read the player's menu choice:
+
+```c rpg.c
+// Mantido scanf de propósito para fins educacionais (entrada básica em C).
+scanf("%d", &hDecision);
+```
+
+The comment translates to: *"scanf kept intentionally for educational purposes (basic input in C)."*
+
+This is a deliberate choice. `scanf` is straightforward to learn and maps directly to the format specifier concepts covered in this page. Professional code often uses more robust input methods, but for learning the mechanics of C I/O, `scanf` gets the job done clearly.
+
+<Note>
+  `hDecision` is an `int`, so the format specifier is `%d` and the argument is `&hDecision` (the address of the variable). This is the most common pattern you will use with `scanf`.
+</Note>
+
+## Common `scanf` pitfalls
+
+<Warning>
+  **Forgetting `&`.** This is the most frequent beginner mistake:
+
+  ```c
+  int x;
+  scanf("%d", x);   // WRONG: passes the value of x (garbage), not its address
+  scanf("%d", &x);  // CORRECT: passes the address so scanf can write to x
+  ```
+
+  Passing the value instead of the address causes undefined behavior — your program may crash or silently corrupt memory.
+</Warning>
+
+<Warning>
+  **Reading strings with `%s` has no bounds checking.** If the user types more characters than the array can hold, the extra characters overwrite adjacent memory:
+
+  ```c
+  char name[10];
+  scanf("%s", name);        // dangerous if user types more than 9 characters
+  scanf("%9s", name);       // safer: reads at most 9 characters + null terminator
+  ```
+
+  For exercises in this repository, inputs are controlled and short, so the basic form is acceptable. In production code, always limit string width.
+</Warning>
+
+<Warning>
+  **Leftover newline in the input buffer.** After reading an integer with `scanf("%d", &n)`, a `\n` character remains in the input buffer. If you then try to read a character with `scanf("%c", &ch)`, it will immediately read that leftover newline instead of waiting for your input.
+
+  Fix: add a space before `%c` to skip whitespace:
+
+  ```c
+  scanf(" %c", &ch);  // the leading space skips any whitespace including \n
+  ```
+</Warning>
+
+## Complete interactive example
+
+```c
+#include <stdio.h>
+
+int main() {
+    int hp = 100;
+    int damage;
+    char action;
+
+    printf("========= COMBAT =========\n");
+    printf("Your HP: %d\n", hp);
+    printf("Enter damage taken: ");
+    scanf("%d", &damage);
+
+    hp -= damage;
+    printf("HP after hit: %d\n", hp);
+
+    printf("Drink potion? (y/n): ");
+    scanf(" %c", &action);  // space before %c skips leftover newline
+
+    if (action == 'y' || action == 'Y') {
+        hp += 15;
+        printf("Restored 15 HP. HP now: %d\n", hp);
+    } else {
+        printf("No potion used. HP stays at: %d\n", hp);
+    }
+
+    printf("========= END =========\n");
+    return 0;
+}
+```

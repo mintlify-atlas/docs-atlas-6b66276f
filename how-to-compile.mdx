@@ -1,0 +1,149 @@
+---
+title: "How to compile"
+description: "Step-by-step instructions for compiling C programs using GCC, Clang, or an IDE."
+---
+
+C is a compiled language, which means you must translate your source code into an executable before you can run it. This page explains how to do that with the most common tools.
+
+## Basic GCC compilation
+
+GCC (GNU Compiler Collection) is the most widely used C compiler and is available on Linux, macOS, and Windows (via MinGW or WSL).
+
+The basic syntax is:
+
+```bash
+gcc file.c -o output
+```
+
+- `file.c` — the source file you want to compile
+- `-o output` — the name of the compiled executable
+
+To compile `rpg.c` from this repository:
+
+```bash
+gcc rpg.c -o rpg
+```
+
+## Running the compiled program
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    After compiling, run the executable with:
+
+    ```bash
+    ./rpg
+    ```
+
+    The `./` prefix tells the shell to look in the current directory for the file.
+  </Tab>
+  <Tab title="Windows">
+    On Windows, the compiler produces a `.exe` file. Run it with:
+
+    ```bash
+    rpg.exe
+    ```
+
+    Or simply:
+
+    ```bash
+    rpg
+    ```
+
+    The `.exe` extension is optional when running from the Command Prompt or PowerShell.
+  </Tab>
+</Tabs>
+
+## Useful GCC flags
+
+You can pass extra flags to GCC to change how it compiles your code. Here are the most useful ones for learning:
+
+| Flag | Purpose |
+|---|---|
+| `-Wall` | Enable all common warnings. Highly recommended. |
+| `-Wextra` | Enable additional warnings beyond `-Wall`. |
+| `-g` | Include debug symbols so you can use a debugger like GDB. |
+| `-O2` | Apply optimization level 2 for faster executables. |
+| `-std=c99` | Compile according to the C99 standard. |
+
+<Tip>
+  Always compile with `-Wall` and `-Wextra` while learning. Warnings often catch real bugs before they cause problems at runtime.
+</Tip>
+
+Example using multiple flags:
+
+```bash
+gcc -Wall -Wextra -g rpg.c -o rpg
+```
+
+## Compiling with Clang
+
+Clang is an alternative compiler that produces the same kind of executable and uses the same flag syntax as GCC.
+
+<CodeGroup>
+
+```bash GCC
+gcc -Wall -g rpg.c -o rpg
+```
+
+```bash Clang
+clang -Wall -g rpg.c -o rpg
+```
+
+</CodeGroup>
+
+Clang often produces more readable error messages than GCC, which can be helpful when debugging.
+
+## Concrete example: compiling rpg.c
+
+`rpg.c` is a text-based RPG game from this repository that demonstrates `switch`, `while`, `if`, and `else`. Here is the full compile-and-run workflow:
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    gcc -Wall rpg.c -o rpg
+    ./rpg
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```bash
+    gcc -Wall rpg.c -o rpg
+    rpg.exe
+    ```
+  </Tab>
+</Tabs>
+
+After running, you will see a turn-based combat prompt in your terminal:
+
+```
+| --- YOUR TURN (Enemy 1/5) ---
+| Your HP: 100 | Enemy HP: 25 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice:
+```
+
+<Note>
+  `rpg.c` uses `usleep` from `<unistd.h>` for its typing animation. This header is available on Linux and macOS by default. On Windows, compile with MinGW or WSL to get the same behavior.
+</Note>
+
+## Using an IDE
+
+If you prefer a graphical interface over the terminal, the following IDEs all support C development:
+
+<AccordionGroup>
+  <Accordion title="VS Code">
+    Install the **C/C++** extension by Microsoft from the Extensions panel. Open your `.c` file, then use the built-in terminal to run GCC commands, or configure a `tasks.json` build task for one-click compilation.
+  </Accordion>
+  <Accordion title="Dev-C++">
+    A lightweight, beginner-friendly IDE for Windows. Open the `.c` file, then press **F9** (Compile) or **F10** (Compile and Run). Dev-C++ uses GCC under the hood via MinGW.
+  </Accordion>
+  <Accordion title="Code::Blocks">
+    A cross-platform IDE available on Windows, Linux, and macOS. Create a new C project, add your `.c` file, and press **F9** to build and run. Code::Blocks uses GCC by default.
+  </Accordion>
+  <Accordion title="CLion">
+    A full-featured IDE by JetBrains with advanced refactoring, debugging, and CMake integration. Free for students with a JetBrains educational license. Open the repository folder as a CMake project or create a simple CMakeLists.txt.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  IDEs sometimes hide compiler errors in their output panels. If your program behaves unexpectedly, try compiling directly from the terminal with `-Wall` to see all warnings and errors clearly.
+</Warning>

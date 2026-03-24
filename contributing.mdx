@@ -1,0 +1,123 @@
+---
+title: "Contributing"
+description: "How to add exercises, fix errors, or improve examples in the repository."
+---
+
+Contributions are welcome from any student, regardless of university. If you want to add new exercises, correct a mistake, or improve an existing example, follow the workflow below.
+
+<Info>
+  You will need a GitHub account and Git installed on your machine to contribute.
+</Info>
+
+## Contribution workflow
+
+<Steps>
+  <Step title="Fork the repository">
+    Go to the repository on GitHub and click the **Fork** button in the top-right corner. This creates a personal copy of the repository under your own GitHub account.
+  </Step>
+
+  <Step title="Clone your fork">
+    Clone your forked repository to your local machine:
+
+    ```bash
+    git clone https://github.com/your-username/ibmr-c-exercises.git
+    cd ibmr-c-exercises
+    ```
+
+    Replace `your-username` with your GitHub username.
+  </Step>
+
+  <Step title="Create a new branch">
+    Always work on a dedicated branch rather than directly on `main`. Give the branch a descriptive name:
+
+    ```bash
+    git checkout -b my-contribution
+    ```
+
+    Examples of good branch names:
+    - `add-pointers-exercise`
+    - `fix-loop-example`
+    - `improve-struct-comments`
+  </Step>
+
+  <Step title="Make your changes">
+    Add your files, fix the bug, or improve the existing code. See the [code style guidelines](#code-style) below before writing any code.
+  </Step>
+
+  <Step title="Commit your changes">
+    Stage and commit your changes with a clear, descriptive commit message:
+
+    ```bash
+    git add .
+    git commit -m "feat: add pointers exercise with linked list example"
+    ```
+
+    Keep commit messages short and use a prefix that describes the type of change:
+    - `feat:` — new exercise or feature
+    - `fix:` — correction to existing code or explanation
+    - `docs:` — changes to comments or documentation only
+    - `refactor:` — restructuring without changing behavior
+  </Step>
+
+  <Step title="Push to your fork">
+    Push your branch to your forked repository on GitHub:
+
+    ```bash
+    git push origin my-contribution
+    ```
+  </Step>
+
+  <Step title="Open a Pull Request">
+    Go to the original repository on GitHub. You should see a prompt to open a Pull Request from your recently pushed branch. Click **Compare & pull request**, write a brief description of what you added or changed, and submit.
+
+    A maintainer will review your contribution and may leave comments or request adjustments before merging.
+  </Step>
+</Steps>
+
+## Code style
+
+To keep the repository consistent and easy to follow for other students, please observe the following guidelines when writing code:
+
+### Comment your code
+
+Every exercise should be understandable by a student who is seeing that topic for the first time. Add comments that explain **why** something is done, not just **what** the code does.
+
+```c
+/* Using srand with time(NULL) ensures a different random seed each run.
+   Without this, rand() returns the same sequence every time. */
+srand(time(NULL));
+
+/* rand() % 3 restricts the result to 0, 1, or 2. Adding 1 shifts
+   the range to 1, 2, or 3. */
+const int roll = (rand() % 3) + 1;
+```
+
+### Keep exercises focused
+
+Each file should illustrate one concept or a small set of related concepts. Avoid combining many unrelated topics in a single exercise file — it makes it harder for students to identify what to study.
+
+### Use descriptive variable names
+
+Avoid single-letter variable names except in conventional contexts like loop counters (`i`, `j`) or coordinates. Clear names make exercises easier to follow:
+
+```c
+/* Avoid */
+int x = 100;
+int y = 25;
+
+/* Prefer */
+int heroHp = 100;
+int enemyHp = 25;
+```
+
+### Organize files in the correct topic folder
+
+Place your file in the folder that matches its primary topic. If the topic folder does not exist yet, create it with a consistent name (lowercase, hyphens instead of spaces).
+
+<Tip>
+  Look at existing files in the repository — especially well-commented ones like `rpg.c` — to get a sense of the style and level of explanation that works well for the audience.
+</Tip>
+
+<Warning>
+  Do not commit generated files or IDE project files (`.exe`, `.o`, `.vscode/`, `.idea/`, etc.). Add them to a `.gitignore` file if they are not already excluded.
+</Warning>

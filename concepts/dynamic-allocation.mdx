@@ -1,0 +1,315 @@
+---
+title: "Dynamic allocation"
+description: "Using malloc, calloc, realloc, and free for heap memory management in C."
+---
+
+When you declare `int arr[10];`, the compiler reserves exactly 10 integers on the **stack** at compile time. But what if you do not know the size until the program runs — for example, because the user types it in? That is where **dynamic allocation** comes in: you request memory from the **heap** at runtime, and you are responsible for releasing it when you are done.
+
+## Stack vs heap
+
+| | Stack | Heap |
+|---|---|---|
+| Size known at | Compile time | Runtime |
+| Lifetime | Until the enclosing function returns | Until you call `free` |
+| Managed by | Compiler | You |
+| Typical size limit | A few MB | Available RAM |
+
+For small, fixed-size variables the stack is ideal. For large buffers, variable-size collections, or data that must outlive a function call, use the heap.
+
+## The four allocation functions
+
+All four live in `<stdlib.h>`.
+
+### `malloc` — allocate uninitialized memory
+
+```c malloc-basic.c
+#include <stdlib.h>
+
+int *p = malloc(5 * sizeof(int)); // 5 ints, contents undefined
+```
+
+`malloc(size)` allocates `size` bytes and returns a `void *` pointer to the block. The memory is **not zeroed** — it contains whatever bytes were there before.
+
+### `calloc` — allocate and zero-initialize
+
+```c calloc-basic.c
+int *p = calloc(5, sizeof(int)); // 5 ints, all set to 0
+```
+
+`calloc(count, size)` allocates `count * size` bytes and **fills every byte with zero**. Slightly slower than `malloc` for large allocations, but safe from uninitialized-read bugs.
+
+### `realloc` — resize an allocation
+
+```c realloc-basic.c
+int *p = malloc(5 * sizeof(int));
+// ... need more space ...
+p = realloc(p, 10 * sizeof(int)); // grow to 10 ints
+```
+
+`realloc(ptr, new_size)` changes the size of a previous allocation. It may move the block to a new address, so always assign the result back to your pointer.
+
+### `free` — release memory
+
+```c free-basic.c
+free(p); // return the block to the heap
+p = NULL; // good habit: avoid dangling pointer
+```
+
+`free(ptr)` returns the memory block to the heap. After calling `free`, the pointer is **dangling** — set it to `NULL` so you cannot accidentally use it.
+
+## Always check for NULL
+
+Both `malloc` and `calloc` return `NULL` if allocation fails (for example, when the system is out of memory). Dereferencing a `NULL` pointer crashes your program.
+
+```c null-check.c
+int *p = malloc(100 * sizeof(int));
+if (p == NULL) {
+    fprintf(stderr, "Allocation failed\n");
+    exit(1); // or return an error code
+}
+// safe to use p now
+```
+
+<Tip>
+  Use `sizeof(type)` instead of hard-coding byte counts. `malloc(100 * sizeof(int))` works correctly on every platform, even when `int` is 2 or 8 bytes.
+</Tip>
+
+## The malloc → use → free lifecycle
+
+<Steps>
+  <Step title="Allocate">
+    Request memory from the heap with `malloc` or `calloc`. Check that the returned pointer is not `NULL`.
+
+    ```c step-alloc.c
+    int n = 5;
+    int *arr = malloc(n * sizeof(int));
+    if (arr == NULL) {
+        exit(1);
+    }
+    ```
+  </Step>
+  <Step title="Use">
+    Read and write through the pointer just like a regular array. Index from `0` to `n - 1`.
+
+    ```c step-use.c
+    for (int i = 0; i < n; i++) {
+        arr[i] = i * 10; // 0, 10, 20, 30, 40
+    }
+    printf("%d\n", arr[2]); // 20
+    ```
+  </Step>
+  <Step title="Free">
+    Release the memory when you no longer need it. Set the pointer to `NULL` immediately after.
+
+    ```c step-free.c
+    free(arr);
+    arr = NULL;
+    ```
+  </Step>
+</Steps>
+
+## Complete example: dynamic integer array
+
+<CodeGroup>
+
+```c dynamic-array.c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n;
+    printf("How many integers? ");
+    scanf("%d", &n);
+
+    // Allocate n integers on the heap
+    int *arr = malloc(n * sizeof(int));
+    if (arr == NULL) {
+        fprintf(stderr, "Allocation failed\n");
+        return 1;
+    }
+
+    // Fill with values
+    for (int i = 0; i < n; i++) {
+        arr[i] = (i + 1) * 5; // 5, 10, 15, ...
+    }
+
+    // Print
+    printf("Array: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+
+    // Release
+    free(arr);
+    arr = NULL;
+
+    return 0;
+}
+```
+
+```c sample-output.txt
+How many integers? 4
+Array: 5 10 15 20
+```
+
+</CodeGroup>
+
+## Example: dynamically allocating a struct
+
+You can allocate a single struct on the heap and access its fields through the arrow operator (`->`).
+
+```c dynamic-struct.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    char name[32];
+    int  score;
+} Student;
+
+int main() {
+    // Allocate one Student on the heap
+    Student *s = malloc(sizeof(Student));
+    if (s == NULL) {
+        fprintf(stderr, "Allocation failed\n");
+        return 1;
+    }
+
+    strcpy(s->name, "Ana");
+    s->score = 92;
+
+    printf("%s scored %d\n", s->name, s->score);
+
+    free(s);
+    s = NULL;
+    return 0;
+}
+```
+
+<Note>
+  Use `->` (arrow) to access struct fields through a pointer: `s->score` is shorthand for `(*s).score`.
+</Note>
+
+## Resizing with realloc
+
+<AccordionGroup>
+  <Accordion title="How realloc works">
+    `realloc(ptr, new_size)` tries to resize the block in place. If it cannot (because adjacent memory is occupied), it:
+
+    1. Allocates a brand-new block of `new_size` bytes.
+    2. Copies the old contents into it.
+    3. Frees the old block.
+    4. Returns the new pointer.
+
+    The old pointer is **invalid** after `realloc` — always use the returned value.
+  </Accordion>
+  <Accordion title="Safe realloc pattern">
+    Never assign the result of `realloc` directly back to the same pointer. If `realloc` returns `NULL` (failure), you lose the original pointer and leak the memory.
+
+    ```c safe-realloc.c
+    // WRONG — leaks memory on failure
+    arr = realloc(arr, new_size);
+
+    // CORRECT — check before overwriting the pointer
+    int *tmp = realloc(arr, new_size * sizeof(int));
+    if (tmp == NULL) {
+        // arr is still valid here — handle the error
+        free(arr);
+        return 1;
+    }
+    arr = tmp; // safe to update now
+    ```
+  </Accordion>
+  <Accordion title="Growing a dynamic array">
+    A common pattern is to start with a small allocation and double it when you need more space:
+
+    ```c grow-array.c
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int main() {
+        int capacity = 4;
+        int size     = 0;
+        int *arr = malloc(capacity * sizeof(int));
+        if (!arr) return 1;
+
+        // Simulate adding 8 items
+        for (int i = 0; i < 8; i++) {
+            if (size == capacity) {
+                capacity *= 2;
+                int *tmp = realloc(arr, capacity * sizeof(int));
+                if (!tmp) { free(arr); return 1; }
+                arr = tmp;
+            }
+            arr[size++] = i * 3;
+        }
+
+        for (int i = 0; i < size; i++) printf("%d ", arr[i]);
+        printf("\n"); // 0 3 6 9 12 15 18 21
+
+        free(arr);
+        return 0;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Common mistakes
+
+<Warning>
+  ### Memory leak
+
+  A memory leak happens when you allocate memory but never call `free`. The block is permanently unavailable for the rest of the program's lifetime.
+
+  ```c leak.c
+  void loadData() {
+      int *buf = malloc(1024 * sizeof(int));
+      // ... use buf ...
+      // forgot to call free(buf)!
+  } // buf goes out of scope — memory is leaked
+  ```
+
+  Every `malloc`/`calloc` should have a matching `free` on every exit path.
+</Warning>
+
+<Warning>
+  ### Double free
+
+  Calling `free` on the same pointer twice corrupts the heap and can cause crashes or security vulnerabilities.
+
+  ```c double-free.c
+  int *p = malloc(sizeof(int));
+  free(p);
+  free(p); // UNDEFINED BEHAVIOR — heap corruption
+  ```
+
+  Setting the pointer to `NULL` after `free` prevents this: `free(NULL)` is safe and does nothing.
+</Warning>
+
+<Warning>
+  ### Use after free
+
+  Accessing memory after calling `free` on it is undefined behavior — the memory may have been reallocated to something else.
+
+  ```c use-after-free.c
+  int *p = malloc(sizeof(int));
+  *p = 42;
+  free(p);
+  printf("%d\n", *p); // UNDEFINED BEHAVIOR
+  ```
+</Warning>
+
+<Warning>
+  ### Accessing freed memory via another pointer
+
+  If two pointers point to the same block and you free through one, the other becomes dangling.
+
+  ```c dangling.c
+  int *a = malloc(sizeof(int));
+  int *b = a;   // b points to the same block
+  free(a);
+  *b = 10;      // UNDEFINED BEHAVIOR — b is dangling
+  ```
+</Warning>

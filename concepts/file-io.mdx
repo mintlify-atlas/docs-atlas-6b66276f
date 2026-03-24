@@ -1,0 +1,328 @@
+---
+title: "File I/O"
+description: "Reading and writing files in C using fopen, fclose, fprintf, fscanf, and fgets."
+---
+
+C's standard library provides a set of functions for reading and writing files. All of them work through a **file pointer** of type `FILE *`, which you obtain from `fopen` and must close with `fclose` when you are done.
+
+## The open → read/write → close lifecycle
+
+<Steps>
+  <Step title="Open the file">
+    Call `fopen(filename, mode)` to open a file and get a `FILE *` handle.
+
+    ```c open.c
+    #include <stdio.h>
+
+    FILE *fp = fopen("grades.txt", "w");
+    if (fp == NULL) {
+        perror("fopen failed");
+        return 1;
+    }
+    ```
+
+    Always check that the returned pointer is not `NULL`. A `NULL` result means the file could not be opened (file not found, permission denied, disk full, etc.).
+  </Step>
+  <Step title="Read or write">
+    Use the appropriate function for your task — `fprintf`/`fputs` to write, `fscanf`/`fgets`/`fgetc` to read. See the sections below for details.
+  </Step>
+  <Step title="Close the file">
+    Call `fclose(fp)` when you are finished. This flushes any buffered writes to disk and releases the file handle.
+
+    ```c close.c
+    fclose(fp);
+    fp = NULL; // good habit
+    ```
+  </Step>
+</Steps>
+
+## File modes
+
+| Mode | Meaning | Creates file? | Truncates? |
+|------|---------|:---:|:---:|
+| `"r"` | Read text | No | No |
+| `"w"` | Write text | Yes | Yes |
+| `"a"` | Append text | Yes | No |
+| `"r+"` | Read + write text | No | No |
+| `"w+"` | Read + write text | Yes | Yes |
+| `"rb"` | Read binary | No | No |
+| `"wb"` | Write binary | Yes | Yes |
+| `"ab"` | Append binary | Yes | No |
+
+<Note>
+  On Windows, text mode (`"r"`, `"w"`, etc.) translates `\r\n` newlines automatically. Use binary mode (`"rb"`, `"wb"`) when you need exact byte-for-byte control, or when reading binary file formats.
+</Note>
+
+## Writing to a file
+
+<Tabs>
+  <Tab title="fprintf">
+    `fprintf(fp, format, ...)` works exactly like `printf`, but writes to a file instead of the terminal.
+
+    ```c fprintf-example.c
+    FILE *fp = fopen("output.txt", "w");
+    if (!fp) { perror("fopen"); return 1; }
+
+    fprintf(fp, "Name: %s\n", "Carlos");
+    fprintf(fp, "Score: %d\n", 88);
+
+    fclose(fp);
+    ```
+  </Tab>
+  <Tab title="fputs">
+    `fputs(str, fp)` writes a string to a file. It does **not** add a newline automatically — include `"\n"` in the string if you need one.
+
+    ```c fputs-example.c
+    FILE *fp = fopen("notes.txt", "w");
+    if (!fp) { perror("fopen"); return 1; }
+
+    fputs("First line\n", fp);
+    fputs("Second line\n", fp);
+
+    fclose(fp);
+    ```
+  </Tab>
+</Tabs>
+
+## Reading from a file
+
+<Tabs>
+  <Tab title="fscanf">
+    `fscanf(fp, format, ...)` reads formatted input from a file — the file equivalent of `scanf`.
+
+    ```c fscanf-example.c
+    FILE *fp = fopen("data.txt", "r");
+    if (!fp) { perror("fopen"); return 1; }
+
+    char name[32];
+    int  score;
+    // Reads one name and one integer per call
+    while (fscanf(fp, "%31s %d", name, &score) == 2) {
+        printf("%s: %d\n", name, score);
+    }
+
+    fclose(fp);
+    ```
+
+    `fscanf` returns the number of items successfully read. Check the return value to detect EOF or parse errors.
+  </Tab>
+  <Tab title="fgets">
+    `fgets(buf, size, fp)` reads one line at a time (up to `size - 1` characters) and null-terminates the result. It is safer than `fscanf` for reading arbitrary text.
+
+    ```c fgets-example.c
+    FILE *fp = fopen("lines.txt", "r");
+    if (!fp) { perror("fopen"); return 1; }
+
+    char line[256];
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        printf("%s", line); // line already includes '\n'
+    }
+
+    fclose(fp);
+    ```
+
+    `fgets` returns `NULL` when it reaches the end of the file or an error occurs.
+  </Tab>
+  <Tab title="fgetc">
+    `fgetc(fp)` reads one character at a time. It returns the character as an `int`, or `EOF` when the file ends.
+
+    ```c fgetc-example.c
+    FILE *fp = fopen("text.txt", "r");
+    if (!fp) { perror("fopen"); return 1; }
+
+    int ch;
+    while ((ch = fgetc(fp)) != EOF) {
+        putchar(ch);
+    }
+
+    fclose(fp);
+    ```
+  </Tab>
+</Tabs>
+
+## Reading until EOF
+
+There are two reliable ways to detect the end of a file:
+
+<CodeGroup>
+
+```c check-return-value.c
+// Preferred: check the return value of the read function
+char line[128];
+while (fgets(line, sizeof(line), fp) != NULL) {
+    // process line
+}
+```
+
+```c feof.c
+// Alternative: use feof() after a read attempt
+char line[128];
+while (1) {
+    if (fgets(line, sizeof(line), fp) == NULL) break;
+    if (feof(fp)) break;
+    // process line
+}
+```
+
+</CodeGroup>
+
+<Warning>
+  Do not check `feof(fp)` **before** reading. `feof` only becomes true **after** a read attempt has already failed. The classic mistake is:
+
+  ```c feof-mistake.c
+  // WRONG — reads one extra iteration
+  while (!feof(fp)) {
+      fgets(line, sizeof(line), fp);
+      printf("%s", line); // may print last line twice
+  }
+  ```
+
+  Always use the return value of `fgets`, `fscanf`, or `fgetc` to control the loop.
+</Warning>
+
+## Complete example: write and read student grades
+
+<CodeGroup>
+
+```c grades-write.c
+#include <stdio.h>
+
+int main() {
+    FILE *fp = fopen("grades.txt", "w");
+    if (fp == NULL) {
+        perror("Cannot open grades.txt for writing");
+        return 1;
+    }
+
+    // Write five student records
+    fprintf(fp, "Alice   92\n");
+    fprintf(fp, "Bob     78\n");
+    fprintf(fp, "Carlos  85\n");
+    fprintf(fp, "Diana   96\n");
+    fprintf(fp, "Ethan   70\n");
+
+    fclose(fp);
+    printf("Grades written to grades.txt\n");
+    return 0;
+}
+```
+
+```c grades-read.c
+#include <stdio.h>
+
+int main() {
+    FILE *fp = fopen("grades.txt", "r");
+    if (fp == NULL) {
+        perror("Cannot open grades.txt for reading");
+        return 1;
+    }
+
+    char name[32];
+    int  score;
+    int  total = 0;
+    int  count = 0;
+
+    printf("%-10s %s\n", "Name", "Score");
+    printf("----------------\n");
+
+    while (fscanf(fp, "%31s %d", name, &score) == 2) {
+        printf("%-10s %d\n", name, score);
+        total += score;
+        count++;
+    }
+
+    fclose(fp);
+
+    if (count > 0) {
+        printf("----------------\n");
+        printf("Average:   %.1f\n", (double)total / count);
+    }
+
+    return 0;
+}
+```
+
+```c grades.txt
+Alice   92
+Bob     78
+Carlos  85
+Diana   96
+Ethan   70
+```
+
+</CodeGroup>
+
+Running `grades-read` produces:
+
+```
+Name       Score
+----------------
+Alice      92
+Bob        78
+Carlos     85
+Diana      96
+Ethan      70
+----------------
+Average:   84.2
+```
+
+## Text mode vs binary mode
+
+For most beginner programs, text mode is all you need. Binary mode matters when:
+
+- You are reading or writing non-text data (images, compiled files, custom binary formats).
+- You need exact byte counts and do not want newline translation.
+- You are writing cross-platform code that must produce identical files on Windows and Unix.
+
+```c binary-example.c
+// Writing raw ints to a binary file
+FILE *fp = fopen("data.bin", "wb");
+if (!fp) { perror("fopen"); return 1; }
+
+int values[3] = {10, 20, 30};
+fwrite(values, sizeof(int), 3, fp); // write 3 ints
+fclose(fp);
+
+// Reading them back
+fp = fopen("data.bin", "rb");
+if (!fp) { perror("fopen"); return 1; }
+
+int result[3];
+fread(result, sizeof(int), 3, fp);  // read 3 ints
+fclose(fp);
+
+printf("%d %d %d\n", result[0], result[1], result[2]); // 10 20 30
+```
+
+## Common mistakes
+
+<Warning>
+  ### Forgetting to check if `fopen` succeeded
+
+  If you skip the `NULL` check and `fopen` fails, every subsequent read or write through that pointer is undefined behavior — often a silent crash or garbled output.
+
+  ```c no-check.c
+  FILE *fp = fopen("missing.txt", "r");
+  // forgot to check fp != NULL
+  fscanf(fp, "%d", &x); // CRASH if fopen failed
+  ```
+</Warning>
+
+<Warning>
+  ### Forgetting to close the file
+
+  Each open file uses a file descriptor, and the OS has a limit on how many a process can have open at once. More importantly, write operations are often **buffered** — if you do not call `fclose`, the last chunk of data may never reach disk.
+
+  ```c no-close.c
+  FILE *fp = fopen("output.txt", "w");
+  fprintf(fp, "Important data\n");
+  // forgot fclose — data may be lost!
+  return 0;
+  ```
+
+  Every `fopen` should have a corresponding `fclose` on every exit path.
+</Warning>
+
+<Tip>
+  If your program has multiple return paths (early returns on error), close the file before each one, or use `goto cleanup` to consolidate cleanup at the end of the function.
+</Tip>

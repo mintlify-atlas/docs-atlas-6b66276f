@@ -1,0 +1,249 @@
+---
+title: "Structs"
+description: "User-defined data structures using struct in C."
+---
+
+A **struct** (short for structure) is a user-defined composite type that groups related variables under a single name. Where an array holds multiple values of the **same** type, a struct holds multiple values of **different** types.
+
+## Declaring and defining a struct
+
+```c struct-basic.c
+// Declaration of the struct type
+struct Player {
+    int hp;         // health points
+    int potions;    // number of potions
+    double damage;  // attack damage
+};
+
+int main() {
+    // Define (create) a variable of that type
+    struct Player hero;
+
+    // Assign values
+    hero.hp      = 100;
+    hero.potions = 3;
+    hero.damage  = 5.0;
+
+    printf("HP: %d\n", hero.hp); // 100
+    return 0;
+}
+```
+
+You can also initialize a struct at declaration:
+
+```c struct-init.c
+struct Player hero = {100, 3, 5.0}; // in order of declaration
+struct Player enemy = {.hp = 25, .damage = 9.0}; // designated initializers (C99)
+```
+
+## Accessing members with the `.` operator
+
+Use the **dot operator** (`.`) to read or write individual fields:
+
+```c dot-access.c
+struct Player hero = {100, 3, 5.0};
+
+printf("Hero HP: %d\n", hero.hp);
+hero.hp -= 10;              // take 10 damage
+hero.potions--;             // use a potion
+printf("Hero HP after hit: %d\n", hero.hp); // 90
+```
+
+## Modeling the RPG game state
+
+The global variables in `rpg.c` are a perfect candidate for a struct. The game currently uses loose globals:
+
+```c rpg.c
+int eHp    = 25;
+int hHp    = 100;
+double pDmg   = 5.0;
+int eDmg   = 9;
+int potions   = 3;
+int potionEf  = 15;
+```
+
+With a struct, you can group the hero's state cleanly:
+
+```c rpg-struct.c
+#include <stdio.h>
+
+struct Player {
+    int hp;
+    double damage;
+    int potions;
+    int potionEffect;
+};
+
+struct Enemy {
+    int hp;
+    int damage;
+};
+
+int main() {
+    struct Player hero  = {.hp = 100, .damage = 5.0,
+                           .potions = 3, .potionEffect = 15};
+    struct Enemy  enemy = {.hp = 25, .damage = 9};
+
+    // Attack
+    enemy.hp -= (int)hero.damage;
+    printf("Enemy HP: %d\n", enemy.hp); // 16
+
+    // Heal
+    hero.hp += hero.potionEffect;
+    hero.potions--;
+    printf("Hero HP: %d | Potions left: %d\n", hero.hp, hero.potions);
+
+    return 0;
+}
+```
+
+<Tip>
+  Grouping related data into a struct makes your code easier to read, pass around, and extend. Adding a new field (like `int level`) only requires changing the struct definition in one place.
+</Tip>
+
+## Structs as function parameters
+
+<Tabs>
+  <Tab title="Pass by value">
+    Passing a struct by value copies all its fields. Changes inside the function do not affect the original.
+
+    ```c by-value.c
+    struct Player {
+        int hp;
+        int potions;
+        double damage;
+    };
+
+    void showStatus(struct Player p) {
+        printf("HP: %d | Potions: %d\n", p.hp, p.potions);
+        p.hp = 0; // only changes the local copy
+    }
+
+    int main() {
+        struct Player hero = {100, 3, 5.0};
+        showStatus(hero);
+        printf("Still alive: %d\n", hero.hp); // 100 — unchanged
+        return 0;
+    }
+    ```
+  </Tab>
+  <Tab title="Pass by pointer">
+    Passing a pointer to a struct avoids copying and lets the function modify the original. Use the **arrow operator** (`->`) to access fields through a pointer.
+
+    ```c by-pointer.c
+    struct Player {
+        int hp;
+        int potions;
+        double damage;
+    };
+
+    void applyDamage(struct Player *p, int dmg) {
+        p->hp -= dmg;     // arrow operator: (*p).hp -= dmg
+        if (p->hp < 0) p->hp = 0;
+    }
+
+    void usePotion(struct Player *p, int effect) {
+        if (p->potions > 0) {
+            p->hp      += effect;
+            p->potions--;
+        }
+    }
+
+    int main() {
+        struct Player hero = {100, 3, 5.0};
+        applyDamage(&hero, 18);
+        printf("HP after hit: %d\n", hero.hp); // 82
+        usePotion(&hero, 15);
+        printf("HP after potion: %d\n", hero.hp); // 97
+        return 0;
+    }
+    ```
+
+    `p->field` is shorthand for `(*p).field`. They are identical; the arrow is just more readable.
+  </Tab>
+</Tabs>
+
+## Typedef with struct
+
+`typedef` lets you give a type an alias so you do not need to write `struct` every time:
+
+```c typedef.c
+typedef struct {
+    int hp;
+    int potions;
+    double damage;
+} Player;
+
+int main() {
+    Player hero = {100, 3, 5.0}; // no "struct" keyword needed
+    Player enemy = {25, 0, 9.0};
+    return 0;
+}
+```
+
+<Note>
+  `typedef struct` is extremely common in real C code. Many standard library types (like `FILE`) are defined this way.
+</Note>
+
+## Nested structs
+
+A struct can contain another struct as a member:
+
+```c nested.c
+typedef struct {
+    int x;
+    int y;
+} Position;
+
+typedef struct {
+    char name[20];
+    int  hp;
+    Position pos; // nested struct
+} Character;
+
+int main() {
+    Character hero = {"Arthur", 100, {0, 0}};
+    hero.pos.x = 5;
+    hero.pos.y = 3;
+    printf("%s is at (%d, %d)\n", hero.name, hero.pos.x, hero.pos.y);
+    return 0;
+}
+```
+
+## Array of structs
+
+You can create arrays of structs to represent collections of related objects — like a list of enemies in the RPG:
+
+<CodeGroup>
+
+```c enemy-list.c
+typedef struct {
+    int  hp;
+    int  damage;
+    char name[20];
+} Enemy;
+
+int main() {
+    Enemy enemies[3] = {
+        {25, 9,  "Goblin"},
+        {50, 15, "Orc"},
+        {10, 5,  "Rat"}
+    };
+
+    for (int i = 0; i < 3; i++) {
+        printf("Enemy: %-8s | HP: %2d | DMG: %2d\n",
+               enemies[i].name,
+               enemies[i].hp,
+               enemies[i].damage);
+    }
+    return 0;
+}
+```
+
+```c output.txt
+Enemy: Goblin   | HP: 25 | DMG:  9
+Enemy: Orc      | HP: 50 | DMG: 15
+Enemy: Rat      | HP: 10 | DMG:  5
+```
+
+</CodeGroup>

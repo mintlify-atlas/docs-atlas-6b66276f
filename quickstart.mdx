@@ -1,80 +1,151 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Clone the repository and run your first C program in minutes."
 ---
 
-## Get started in three steps
+Get up and running with the IBMR C Exercises repository in under 5 minutes.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before you begin, make sure you have:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+- A C compiler installed (GCC is recommended)
+- Git installed
+- A terminal (Linux, macOS, or Windows with WSL/Git Bash)
 
-### Step 2: Deploy your changes
+<Accordion title="How to install GCC">
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
+<Tabs>
+  <Tab title="Linux (Debian/Ubuntu)">
+    ```bash
+    sudo apt update
+    sudo apt install build-essential
+    gcc --version
+    ```
+  </Tab>
+  <Tab title="macOS">
+    ```bash
+    xcode-select --install
+    gcc --version
+    ```
+    Or install via Homebrew:
+    ```bash
+    brew install gcc
+    ```
+  </Tab>
+  <Tab title="Windows">
+    Install [MinGW-w64](https://www.mingw-w64.org/) or use **WSL** (Windows Subsystem for Linux).
+
+    With WSL:
+    ```bash
+    sudo apt update && sudo apt install build-essential
+    ```
+  </Tab>
+</Tabs>
+
 </Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Get the code
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/insxnsive/ibmr-c-exercises.git
+    cd ibmr-c-exercises
+    ```
+  </Step>
+  <Step title="Explore the files">
+    ```bash
+    ls
+    ```
+    You'll see the available C source files. Currently includes `rpg.c` — a fully commented RPG combat game.
+  </Step>
+  <Step title="Compile a program">
+    Use GCC to compile a `.c` file into an executable:
+    ```bash
+    gcc rpg.c -o rpg
+    ```
+    This creates an executable called `rpg` (or `rpg.exe` on Windows).
+  </Step>
+  <Step title="Run the program">
+    <Tabs>
+      <Tab title="Linux / macOS">
+        ```bash
+        ./rpg
+        ```
+      </Tab>
+      <Tab title="Windows">
+        ```bash
+        rpg.exe
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
 
-### Step 3: Go live
+## Your first session
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+After running `rpg`, you'll see the game introduction and then a combat prompt:
+
+```
+Echoes mutter through your mind..
+'Is this some sort of nightmare?' You ask yourself...
+There's no point in going back now!!
+========= GAUNTLET START! =========
+
+>>> ENEMY #1 APPEARS! <<<
+
+| --- YOUR TURN (Enemy 1/5) ---
+| Your HP: 100 | Enemy HP: 25 | Potions: 3 |
+| 1. Attack | 2. Guard | 3. Potion | 4. Gamble | 5. Flee
+| - Your choice: 
+```
+
+Enter a number (1–5) to take your turn. Defeat all 5 enemies to win!
+
+<Tip>
+  Try compiling with warnings enabled for a better learning experience:
+  ```bash
+  gcc -Wall -Wextra rpg.c -o rpg
+  ```
+</Tip>
+
+## Supported compilers and IDEs
+
+<CodeGroup>
+
+```bash GCC
+gcc file.c -o output
+./output
+```
+
+```bash Clang
+clang file.c -o output
+./output
+```
+
+</CodeGroup>
+
+You can also use any C-capable IDE:
+
+- **VS Code** — with the [C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools)
+- **Dev-C++** — Windows-friendly, beginner-friendly
+- **Code::Blocks** — cross-platform, lightweight
+- **CLion** — full-featured IDE from JetBrains
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="How to compile" icon="terminal" href="/how-to-compile">
+    Learn GCC flags, compiler options, and IDE setup in detail.
+  </Card>
+  <Card title="Hello World" icon="code" href="/concepts/hello-world">
+    Start with the basics: the structure of every C program.
+  </Card>
+  <Card title="RPG game walkthrough" icon="gamepad" href="/examples/rpg-game">
+    Explore the full rpg.c source with a detailed code walkthrough.
+  </Card>
+  <Card title="Contributing" icon="git-pull-request" href="/contributing">
+    Add your own exercises to the repository.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

@@ -1,0 +1,173 @@
+---
+title: "Hello World"
+description: "Your first C program and the basic structure of every C file."
+---
+
+Every programmer starts here. The Hello World program does one thing: print a line of text to the screen. It is small enough to read in ten seconds, but it contains every structural element that every C program you will ever write must have.
+
+## The complete program
+
+```c hello.c
+#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\n");
+    return 0;
+}
+```
+
+Run this and your terminal prints:
+
+```
+Hello, World!
+```
+
+Now let's look at what each line means.
+
+## Line-by-line breakdown
+
+### `#include <stdio.h>`
+
+This is a **preprocessor directive**. Before your code compiles, the C preprocessor reads it and copies the contents of the file `stdio.h` into your source file.
+
+`stdio.h` is the **standard input/output header**. It declares functions like `printf` and `scanf`. Without it, the compiler does not know what `printf` is and will refuse to compile your program.
+
+The angle brackets `< >` mean the compiler should look for this file in the system's standard include directories. When you include your own header files, you use quotes instead: `#include "myfile.h"`.
+
+### `int main()`
+
+This declares the **main function** — the entry point of every C program. When you run your program, the operating system calls `main` first.
+
+- `int` means the function returns an integer value when it finishes.
+- `main` is the required name; you cannot name this function anything else.
+- The parentheses `()` hold the function's parameters. An empty pair means the function takes no arguments (from the command line).
+- The curly braces `{ }` wrap the function body — all the statements that run when the function is called.
+
+### `printf("Hello, World!\n");`
+
+`printf` (print formatted) is a function from `stdio.h` that writes text to standard output (your terminal).
+
+- The argument is a **string literal** enclosed in double quotes.
+- `\n` is an **escape sequence** representing a newline character — it moves the cursor to the next line after printing.
+- The semicolon `;` ends the statement. In C, every statement must end with a semicolon.
+
+### `return 0;`
+
+This exits the `main` function and returns the value `0` to the operating system.
+
+By convention:
+- `0` means the program finished successfully.
+- Any non-zero value signals an error.
+
+The operating system and shell scripts can read this return value to check whether your program succeeded.
+
+## How to compile and run
+
+<Steps>
+  <Step title="Save the file">
+    Create a file named `hello.c` and paste the program into it. The `.c` extension identifies it as a C source file.
+  </Step>
+  <Step title="Compile with GCC">
+    Open your terminal in the same directory as `hello.c` and run:
+
+    ```bash
+    gcc hello.c -o hello
+    ```
+
+    - `gcc` is the GNU C Compiler.
+    - `hello.c` is the source file.
+    - `-o hello` names the output executable `hello`. Without `-o`, GCC names it `a.out` by default.
+  </Step>
+  <Step title="Run the program">
+    ```bash
+    ./hello
+    ```
+
+    You should see:
+
+    ```
+    Hello, World!
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  You can compile and run in one line during development:
+
+  ```bash
+  gcc hello.c -o hello && ./hello
+  ```
+
+  The `&&` only runs the second command if compilation succeeds.
+</Tip>
+
+## Common beginner mistakes
+
+### Missing semicolon
+
+```c
+printf("Hello, World!\n")   // ERROR: missing semicolon
+```
+
+The compiler will produce an error like `expected ';' before '}'`. Every statement in C must end with `;`.
+
+### Wrong or missing include
+
+```c
+// Missing #include <stdio.h>
+
+int main() {
+    printf("Hello\n");  // ERROR: implicit declaration of function 'printf'
+    return 0;
+}
+```
+
+Without the include, the compiler does not know about `printf`. Always add `#include <stdio.h>` when using `printf` or `scanf`.
+
+### Wrong quotes around the include
+
+```c
+#include 'stdio.h'   // ERROR: expected a filename after #include
+```
+
+Preprocessor directives use `< >` for system headers and `" "` for your own headers, never single quotes.
+
+### Typo in `main`
+
+```c
+int Main() {   // ERROR: undefined reference to 'main'
+    return 0;
+}
+```
+
+C is case-sensitive. The entry point must be exactly `main`, not `Main` or `MAIN`.
+
+### Forgetting the newline
+
+```c
+printf("Hello, World!");   // Works, but output has no newline
+```
+
+This compiles and runs, but your next shell prompt will appear on the same line as the output. Always end `printf` strings with `\n`.
+
+<Note>
+  Compilers warn about many of these problems. Run GCC with `-Wall` to enable all standard warnings:
+
+  ```bash
+  gcc -Wall hello.c -o hello
+  ```
+
+  Making `-Wall` a habit will catch bugs early.
+</Note>
+
+## The minimal valid C program
+
+If you strip everything away, the smallest program that compiles and exits cleanly is:
+
+```c
+int main() {
+    return 0;
+}
+```
+
+It does nothing, but it has a valid `main` function and returns a status code. Every more complex program is just this skeleton with more includes and statements added.

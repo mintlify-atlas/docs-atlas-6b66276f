@@ -1,0 +1,262 @@
+---
+title: "Functions"
+description: "Declaring, defining, and calling functions in C, including recursion."
+---
+
+A function is a named block of code that performs a specific task. Instead of writing the same logic over and over, you wrap it in a function and call it whenever you need it. This is the foundation of organized, maintainable C programs.
+
+## Why functions exist
+
+Functions solve two fundamental problems:
+
+- **Code reuse** — write once, call many times
+- **Modularity** — break a big problem into smaller, focused pieces
+
+In `rpg.c`, the `typeText()` function is a perfect example: the game needs to print dramatic text with character-by-character delays in several places. Without a function, you would copy that loop every time. With a function, you call one line.
+
+## Function syntax
+
+Every C function has the same structure:
+
+```c function-anatomy.c
+return_type function_name(parameter_type parameter_name, ...) {
+    // body
+    return value; // omit if return_type is void
+}
+```
+
+| Part | Description |
+|---|---|
+| `return_type` | The type of value the function gives back (`int`, `double`, `void`, etc.) |
+| `function_name` | A descriptive identifier for what the function does |
+| parameters | Input values the function receives; each needs a type and a name |
+| body | The code that runs when the function is called |
+| `return` | Sends a value back to the caller |
+
+## Declaration vs definition
+
+<Tabs>
+  <Tab title="Declaration (prototype)">
+    A **prototype** tells the compiler that a function exists and what its signature looks like. It goes at the top of the file, before `main()`.
+
+    ```c prototype.c
+    // Declaration — ends with a semicolon
+    void typeText(const char *text, int delayMs);
+    ```
+
+    Prototypes are required when a function is called before it is defined in the file.
+  </Tab>
+  <Tab title="Definition">
+    A **definition** contains the actual body of the function.
+
+    ```c definition.c
+    // Definition — has a body in curly braces
+    void typeText(const char *text, int delayMs) {
+        for (int i = 0; text[i] != '\0'; i++) {
+            printf("%c", text[i]);
+            fflush(stdout);
+            sleepMs(delayMs);
+        }
+        printf("\n");
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Tip>
+  If you define your functions above `main()`, you can skip the prototype. If they appear below `main()`, you need prototypes at the top.
+</Tip>
+
+## `void` functions
+
+When a function does not need to return a value, its return type is `void`. It still runs code and can have side effects (like printing output), but the caller does not receive anything back.
+
+```c void-example.c
+void greet(const char *name) {
+    printf("Hello, %s!\n", name);
+    // no return statement needed
+}
+```
+
+## The `typeText()` function from rpg.c
+
+Here is the real `typeText()` function used in the RPG game. It is a great example of a `void` function with two parameters:
+
+```c rpg.c
+void typeText(const char *text, int delayMs) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        printf("%c", text[i]);     // print one character at a time
+        fflush(stdout);            // force output to appear immediately
+        if (text[i] == '.') {
+            sleepMs(delayMs * 25); // longer pause after a period
+        } else {
+            sleepMs(delayMs);      // normal pause between characters
+        }
+    }
+    sleep(2);   // dramatic pause after the full line
+    printf("\n");
+}
+```
+
+<Steps>
+  <Step title="Parameter: const char *text">
+    This is a pointer to a string — a sequence of characters. The `const` keyword means the function promises not to modify the string it receives. You will learn more about pointers on the [Pointers](/concepts/pointers) page.
+  </Step>
+  <Step title="Parameter: int delayMs">
+    An integer that controls how many milliseconds to wait between each character. Callers can adjust the speed: `typeText("Fast!", 5)` vs `typeText("Slow...", 50)`.
+  </Step>
+  <Step title="Loop over the string">
+    `text[i] != '\0'` checks for the null terminator — the invisible character that marks the end of a C string. When `i` reaches it, the loop stops.
+  </Step>
+  <Step title="fflush(stdout)">
+    Normally C buffers output for efficiency. `fflush(stdout)` forces each character to appear on screen right away, which is essential for the animated typing effect.
+  </Step>
+  <Step title="sleepMs macro">
+    `sleepMs(ms)` is a macro defined as `usleep(ms * 1000)`. It pauses execution for the given number of milliseconds. Periods get a longer pause (`delayMs * 25`) for dramatic effect.
+  </Step>
+</Steps>
+
+The function is called like this in `main()`:
+
+```c rpg.c
+typeText("Echoes mutter through your mind..", 20);
+typeText("'Is this some sort of nightmare?' You ask yourself...", 20);
+typeText("There's no point in going back now!!", 10);
+```
+
+## Return values
+
+Functions can compute something and send it back to the caller with `return`.
+
+<CodeGroup>
+
+```c add.c
+int add(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int result = add(3, 4); // result == 7
+    printf("%d\n", result);
+    return 0;
+}
+```
+
+```c max.c
+double maxOf(double x, double y) {
+    if (x > y) return x;
+    return y;
+}
+
+int main() {
+    double biggest = maxOf(3.5, 7.2); // biggest == 7.2
+    printf("%.1f\n", biggest);
+    return 0;
+}
+```
+
+</CodeGroup>
+
+## Passing by value vs passing by pointer
+
+<Tabs>
+  <Tab title="Pass by value">
+    By default, C copies the argument into the parameter. Changes inside the function do **not** affect the original variable.
+
+    ```c pass-by-value.c
+    void doubleIt(int n) {
+        n = n * 2;  // only changes the local copy
+    }
+
+    int main() {
+        int x = 5;
+        doubleIt(x);
+        printf("%d\n", x); // still prints 5
+        return 0;
+    }
+    ```
+  </Tab>
+  <Tab title="Pass by pointer">
+    To modify the original variable, pass its address using `&` and receive a pointer.
+
+    ```c pass-by-pointer.c
+    void doubleIt(int *n) {
+        *n = *n * 2;  // modifies the original through the pointer
+    }
+
+    int main() {
+        int x = 5;
+        doubleIt(&x);           // pass the address of x
+        printf("%d\n", x);      // prints 10
+        return 0;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Arrays are always passed as pointers — even when you write `int arr[]` as a parameter, C treats it as `int *arr`. You will see this in the [Arrays and matrices](/concepts/arrays-and-matrices) page.
+</Note>
+
+## The `main()` function
+
+`main()` is the entry point of every C program. When you run your executable, the operating system calls `main()` first.
+
+```c rpg.c
+int main() {
+    int hDecision;
+    int enemyCount = 0;
+    const int MAX_ENEMIES = 5;
+
+    srand(time(NULL));
+
+    typeText("Echoes mutter through your mind..", 20);
+    // ... rest of the game ...
+
+    return 0; // 0 means the program finished successfully
+}
+```
+
+`main()` returns an `int`. Returning `0` signals success to the operating system. A non-zero value signals an error.
+
+## Recursion
+
+A function can call itself — this is called **recursion**. Every recursive function needs a **base case** that stops the recursion, otherwise it runs forever.
+
+<CodeGroup>
+
+```c factorial.c
+// n! = n * (n-1) * (n-2) * ... * 1
+// Base case: 0! = 1
+int factorial(int n) {
+    if (n == 0) return 1;          // base case
+    return n * factorial(n - 1);   // recursive call
+}
+
+int main() {
+    printf("%d\n", factorial(5)); // prints 120
+    return 0;
+}
+```
+
+```c fibonacci.c
+// Fibonacci: each number is the sum of the two before it
+// Base cases: fib(0) = 0, fib(1) = 1
+int fib(int n) {
+    if (n <= 1) return n;          // base cases
+    return fib(n - 1) + fib(n - 2); // recursive calls
+}
+
+int main() {
+    for (int i = 0; i < 8; i++) {
+        printf("%d ", fib(i)); // prints: 0 1 1 2 3 5 8 13
+    }
+    return 0;
+}
+```
+
+</CodeGroup>
+
+<Warning>
+  Every recursive call uses stack memory. If the recursion is too deep (no base case, or `n` is too large), you will get a **stack overflow** and your program will crash.
+</Warning>

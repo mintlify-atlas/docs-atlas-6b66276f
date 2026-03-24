@@ -1,0 +1,235 @@
+---
+title: "Arrays and matrices"
+description: "Single and multi-dimensional arrays in C, from declaration to iteration."
+---
+
+An **array** is a fixed-size collection of elements of the same type stored in contiguous memory. Arrays are one of the most commonly used data structures in C — they let you store a list of values under a single name and access each one by its position (index).
+
+## Declaring and initializing arrays
+
+<Tabs>
+  <Tab title="1D arrays">
+    ### Declaration
+
+    ```c array-declare.c
+    int scores[5];          // declares an array of 5 ints (values undefined)
+    float temps[10];        // array of 10 floats
+    char letters[26];       // array of 26 chars
+    ```
+
+    ### Initialization at declaration
+
+    ```c array-init.c
+    int scores[5] = {90, 85, 78, 92, 88}; // explicit size
+    int counts[] = {1, 2, 3, 4};          // compiler infers size = 4
+    int zeros[5] = {0};                    // all elements set to 0
+    ```
+
+    ### Accessing elements
+
+    Indices are **zero-based**: the first element is at index `0`, the last at index `size - 1`.
+
+    ```c array-access.c
+    int arr[5] = {10, 20, 30, 40, 50};
+
+    printf("%d\n", arr[0]); // 10 — first element
+    printf("%d\n", arr[4]); // 50 — last element
+
+    arr[2] = 99;            // change the third element
+    printf("%d\n", arr[2]); // 99
+    ```
+  </Tab>
+  <Tab title="2D arrays (matrices)">
+    ### Declaration
+
+    ```c matrix-declare.c
+    int grid[3][4];         // 3 rows, 4 columns
+    float board[8][8];      // 8x8 board (chess)
+    ```
+
+    ### Initialization
+
+    ```c matrix-init.c
+    int grid[3][4] = {
+        {1, 2, 3, 4},   // row 0
+        {5, 6, 7, 8},   // row 1
+        {9, 10, 11, 12} // row 2
+    };
+    ```
+
+    ### Accessing elements
+
+    Use two indices: `array[row][column]`.
+
+    ```c matrix-access.c
+    printf("%d\n", grid[0][0]); // 1  — top-left
+    printf("%d\n", grid[2][3]); // 12 — bottom-right
+
+    grid[1][2] = 99;            // change row 1, column 2
+    ```
+  </Tab>
+</Tabs>
+
+## Iterating arrays with a for loop
+
+The most common pattern is a `for` loop from index `0` to `size - 1`:
+
+```c iterate.c
+int scores[5] = {90, 85, 78, 92, 88};
+int size = 5;
+
+for (int i = 0; i < size; i++) {
+    printf("scores[%d] = %d\n", i, scores[i]);
+}
+```
+
+For a 2D array, use **nested loops** — one for rows, one for columns:
+
+```c iterate-matrix.c
+int grid[3][4] = {
+    {1,  2,  3,  4},
+    {5,  6,  7,  8},
+    {9, 10, 11, 12}
+};
+
+for (int row = 0; row < 3; row++) {
+    for (int col = 0; col < 4; col++) {
+        printf("%3d ", grid[row][col]);
+    }
+    printf("\n");
+}
+```
+
+Output:
+
+```
+  1   2   3   4
+  5   6   7   8
+  9  10  11  12
+```
+
+## Arrays and functions
+
+When you pass an array to a function, C does **not** copy the array. Instead, it passes a pointer to the first element. This is called **array decay**.
+
+```c array-function.c
+// You can write int arr[] or int *arr — both mean the same thing here
+void printArray(int arr[], int size) {
+    for (int i = 0; i < size; i++) {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+}
+
+void doubleAll(int arr[], int size) {
+    for (int i = 0; i < size; i++) {
+        arr[i] *= 2; // modifies the ORIGINAL array (no copy was made)
+    }
+}
+
+int main() {
+    int nums[] = {1, 2, 3, 4, 5};
+    printArray(nums, 5);  // 1 2 3 4 5
+    doubleAll(nums, 5);
+    printArray(nums, 5);  // 2 4 6 8 10
+    return 0;
+}
+```
+
+<Note>
+  Because arrays decay to pointers, you must always pass the size as a separate parameter. The function has no way to know how long the array is on its own.
+</Note>
+
+For 2D arrays, you must specify all dimensions except the first:
+
+```c matrix-function.c
+void printMatrix(int grid[][4], int rows) {
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < 4; c++) {
+            printf("%3d ", grid[r][c]);
+        }
+        printf("\n");
+    }
+}
+```
+
+## Common array operations
+
+<CodeGroup>
+
+```c find-max.c
+int findMax(int arr[], int size) {
+    int max = arr[0];
+    for (int i = 1; i < size; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+        }
+    }
+    return max;
+}
+```
+
+```c sum.c
+int sum(int arr[], int size) {
+    int total = 0;
+    for (int i = 0; i < size; i++) {
+        total += arr[i];
+    }
+    return total;
+}
+```
+
+```c reverse.c
+void reverse(int arr[], int size) {
+    for (int i = 0; i < size / 2; i++) {
+        int temp = arr[i];
+        arr[i] = arr[size - 1 - i];
+        arr[size - 1 - i] = temp;
+    }
+}
+```
+
+</CodeGroup>
+
+## Common mistakes
+
+<Warning>
+  ### Out-of-bounds access
+
+  Accessing an index that does not exist leads to **undefined behavior** — your program may crash, produce garbage values, or corrupt other memory without warning.
+
+  ```c out-of-bounds.c
+  int arr[5] = {1, 2, 3, 4, 5};
+
+  // BAD: index 5 does not exist (valid indices: 0–4)
+  printf("%d\n", arr[5]);  // undefined behavior!
+  arr[-1] = 0;             // also undefined behavior!
+  ```
+
+  C does not perform bounds checking. You are responsible for staying within the valid range.
+</Warning>
+
+<Warning>
+  ### Variable-length arrays (VLAs) are not always safe
+
+  Declaring an array with a size that comes from user input can cause a stack overflow if the size is very large.
+
+  ```c vla-danger.c
+  int n;
+  scanf("%d", &n);
+  int arr[n]; // risky if n is very large
+  ```
+
+  For large or dynamic sizes, use `malloc()` from `<stdlib.h>` instead.
+</Warning>
+
+<Tip>
+  Use `sizeof` to get the size of an array when it is in the same scope where it was declared:
+
+  ```c sizeof.c
+  int arr[] = {10, 20, 30, 40, 50};
+  int size = sizeof(arr) / sizeof(arr[0]); // 5
+  ```
+
+  This trick does **not** work after the array is passed to a function — at that point it has decayed to a pointer.
+</Tip>

@@ -1,0 +1,285 @@
+---
+title: "Operators"
+description: "Arithmetic, relational, logical, bitwise, and assignment operators in C."
+---
+
+Operators are symbols that tell the compiler to perform a specific operation on one or more **operands** (values or variables). C has a large set of operators, and understanding them — including their precedence — is essential for writing correct programs.
+
+<Tabs>
+  <Tab title="Arithmetic">
+    Arithmetic operators perform mathematical calculations.
+
+    | Operator | Name           | Example    | Result |
+    |----------|----------------|------------|--------|
+    | `+`      | Addition       | `5 + 3`    | `8`    |
+    | `-`      | Subtraction    | `5 - 3`    | `2`    |
+    | `*`      | Multiplication | `5 * 3`    | `15`   |
+    | `/`      | Division       | `7 / 2`    | `3`    |
+    | `%`      | Modulo (remainder) | `7 % 2` | `1` |
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        int a = 10, b = 3;
+
+        printf("%d + %d = %d\n", a, b, a + b);  // 13
+        printf("%d - %d = %d\n", a, b, a - b);  // 7
+        printf("%d * %d = %d\n", a, b, a * b);  // 30
+        printf("%d / %d = %d\n", a, b, a / b);  // 3  (integer division)
+        printf("%d %% %d = %d\n", a, b, a % b); // 1  (remainder)
+
+        return 0;
+    }
+    ```
+
+    <Warning>
+      **Integer division truncates.** When both operands are integers, `/` discards the fractional part. `7 / 2` is `3`, not `3.5`. To get a decimal result, cast at least one operand to `float` or `double` first:
+
+      ```c
+      float result = (float)7 / 2;  // 3.5
+      ```
+    </Warning>
+  </Tab>
+  <Tab title="Relational">
+    Relational operators compare two values and return `1` (true) or `0` (false).
+
+    | Operator | Meaning                  | Example  | Result |
+    |----------|--------------------------|----------|--------|
+    | `==`     | Equal to                 | `5 == 5` | `1`    |
+    | `!=`     | Not equal to             | `5 != 3` | `1`    |
+    | `<`      | Less than                | `3 < 5`  | `1`    |
+    | `>`      | Greater than             | `5 > 3`  | `1`    |
+    | `<=`     | Less than or equal to    | `5 <= 5` | `1`    |
+    | `>=`     | Greater than or equal to | `3 >= 5` | `0`    |
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        int hp = 25;
+        int maxHp = 100;
+
+        printf("hp == 25:    %d\n", hp == 25);    // 1
+        printf("hp != 0:     %d\n", hp != 0);     // 1
+        printf("hp < maxHp:  %d\n", hp < maxHp);  // 1
+        printf("hp > maxHp:  %d\n", hp > maxHp);  // 0
+
+        if (hp <= 0) {
+            printf("Defeated!\n");
+        } else {
+            printf("Still standing.\n");
+        }
+
+        return 0;
+    }
+    ```
+
+    <Warning>
+      A very common bug is using `=` (assignment) instead of `==` (comparison) inside an `if` condition:
+
+      ```c
+      if (hp = 0)  // WRONG: assigns 0 to hp, condition is always false
+      if (hp == 0) // CORRECT: tests whether hp equals 0
+      ```
+    </Warning>
+  </Tab>
+  <Tab title="Logical">
+    Logical operators combine boolean (true/false) expressions.
+
+    | Operator | Name | Example         | Result |
+    |----------|------|-----------------|--------|
+    | `&&`     | AND  | `1 && 0`        | `0`    |
+    | `\|\|`   | OR   | `1 \|\| 0`      | `1`    |
+    | `!`      | NOT  | `!1`            | `0`    |
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        int hp = 50;
+        int potions = 2;
+        int enemyCount = 3;
+        int MAX_ENEMIES = 5;
+
+        // AND: both conditions must be true
+        if (enemyCount < MAX_ENEMIES && hp > 0) {
+            printf("Game continues.\n");
+        }
+
+        // OR: at least one condition must be true
+        if (hp <= 0 || potions == 0) {
+            printf("In trouble!\n");
+        }
+
+        // NOT: inverts the condition
+        if (!potions) {
+            printf("No potions left.\n");
+        }
+
+        return 0;
+    }
+    ```
+
+    C uses **short-circuit evaluation**: in `a && b`, if `a` is false, `b` is never evaluated. In `a || b`, if `a` is true, `b` is never evaluated.
+  </Tab>
+  <Tab title="Bitwise">
+    Bitwise operators work directly on the individual bits of integer values.
+
+    | Operator | Name         | Example      | Result (binary) |
+    |----------|--------------|--------------|------------------|
+    | `&`      | AND          | `5 & 3`      | `1` (0101 & 0011 = 0001) |
+    | `\|`     | OR           | `5 \| 3`     | `7` (0101 \| 0011 = 0111) |
+    | `^`      | XOR          | `5 ^ 3`      | `6` (0101 ^ 0011 = 0110) |
+    | `~`      | NOT (complement) | `~5`     | `-6` (inverts all bits) |
+    | `<<`     | Left shift   | `1 << 3`     | `8` (0001 → 1000) |
+    | `>>`     | Right shift  | `8 >> 2`     | `2` (1000 → 0010) |
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        unsigned int flags = 0;       // 00000000
+        unsigned int FLAG_A = 1 << 0; // 00000001
+        unsigned int FLAG_B = 1 << 1; // 00000010
+        unsigned int FLAG_C = 1 << 2; // 00000100
+
+        flags |= FLAG_A;              // set bit 0
+        flags |= FLAG_C;              // set bit 2
+
+        printf("flags = %u\n", flags); // 5 (00000101)
+
+        // Check if FLAG_A is set
+        if (flags & FLAG_A) {
+            printf("FLAG_A is set\n");
+        }
+
+        // Clear FLAG_A
+        flags &= ~FLAG_A;
+        printf("After clear: %u\n", flags); // 4 (00000100)
+
+        return 0;
+    }
+    ```
+  </Tab>
+  <Tab title="Assignment">
+    Assignment operators assign or update a variable's value.
+
+    | Operator | Meaning           | Equivalent to |
+    |----------|-------------------|---------------|
+    | `=`      | Assign            | `a = b`       |
+    | `+=`     | Add and assign    | `a = a + b`   |
+    | `-=`     | Subtract and assign | `a = a - b` |
+    | `*=`     | Multiply and assign | `a = a * b` |
+    | `/=`     | Divide and assign | `a = a / b`   |
+    | `%=`     | Modulo and assign | `a = a % b`   |
+
+    ```c
+    #include <stdio.h>
+
+    int main() {
+        int hp = 100;
+        int damage = 9;
+        int heal = 15;
+
+        hp -= damage;          // same as: hp = hp - damage
+        printf("After hit:  %d\n", hp);  // 91
+
+        hp += heal;            // same as: hp = hp + heal
+        printf("After heal: %d\n", hp);  // 106
+
+        int score = 1;
+        score *= 10;           // same as: score = score * 10
+        printf("Score: %d\n", score);    // 10
+
+        return 0;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Increment and decrement
+
+The `++` and `--` operators add or subtract 1 from a variable. They can be placed **before** (prefix) or **after** (postfix) the variable, and the placement matters when the expression is used inside a larger expression.
+
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 5;
+    int b = 5;
+
+    // Prefix: increment first, then use the value
+    printf("++a = %d\n", ++a);  // 6 (a is now 6)
+
+    // Postfix: use the value first, then increment
+    printf("b++ = %d\n", b++);  // 5 (b is now 6 after this line)
+    printf("b   = %d\n", b);    // 6
+
+    // Decrement works the same way
+    int counter = 3;
+    while (counter--) {          // postfix: test with current value, then decrement
+        printf("counter = %d\n", counter);
+    }
+    // prints 2, 1, 0
+
+    return 0;
+}
+```
+
+<Note>
+  In standalone statements like `i++` or `++i` on their own line, prefix and postfix behave identically. The difference only matters when the expression is embedded in a larger context, such as an assignment or a function argument.
+</Note>
+
+## Ternary operator
+
+The ternary (conditional) operator is a compact way to choose between two values based on a condition:
+
+```
+condition ? value_if_true : value_if_false
+```
+
+```c
+#include <stdio.h>
+
+int main() {
+    int hp = 50;
+    int maxHp = 100;
+
+    // Equivalent to an if/else that picks a string
+    const char *status = (hp > 0) ? "Alive" : "Defeated";
+    printf("Status: %s\n", status);  // Alive
+
+    // Inline in printf
+    printf("HP: %d/%d (%s)\n",
+           hp, maxHp,
+           (hp >= maxHp / 2) ? "healthy" : "low");
+
+    return 0;
+}
+```
+
+## Operator precedence
+
+When multiple operators appear in one expression, C evaluates them in a defined order. Higher precedence means evaluated first.
+
+| Precedence | Operators                          | Associativity  |
+|------------|------------------------------------|----------------|
+| 1 (highest)| `()` `[]` `.` `->`                 | Left to right  |
+| 2          | `!` `~` `++` `--` `+` `-` (unary) `*` (deref) `&` (addr) `sizeof` | Right to left |
+| 3          | `*` `/` `%`                        | Left to right  |
+| 4          | `+` `-`                            | Left to right  |
+| 5          | `<<` `>>`                          | Left to right  |
+| 6          | `<` `<=` `>` `>=`                  | Left to right  |
+| 7          | `==` `!=`                          | Left to right  |
+| 8          | `&`                                | Left to right  |
+| 9          | `^`                                | Left to right  |
+| 10         | `\|`                               | Left to right  |
+| 11         | `&&`                               | Left to right  |
+| 12         | `\|\|`                             | Left to right  |
+| 13         | `?:`                               | Right to left  |
+| 14 (lowest)| `=` `+=` `-=` `*=` `/=` `%=` etc. | Right to left  |
+
+<Tip>
+  When in doubt, use parentheses. `(a + b) * c` is always clearer than relying on precedence rules, and the compiler will not add any overhead for them.
+</Tip>
